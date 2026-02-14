@@ -1,6 +1,10 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
+
 
 float vertices[] = {
     -0.5f, 0.0f, 0.0f,
@@ -11,23 +15,21 @@ float vertices[] = {
     0.0f,  0.5f, 0.0f
 };
 
-const char* vertexShaderSource = 
-"#version 330 core\n"
-"layout (location = 0) in vec3 aPos;\n"
-"\n"
-"void main()\n"
-"{\n"
-"    gl_Position = vec4(aPos, 1.0);\n"
-"}\n";
+std::string loadShaderSource(const char* filepath)
+{
+    std::ifstream file(filepath);
+    std::stringstream buffer;
 
-const char* fragmentShaderSource = 
-"#version 330 core\n"
-"out vec4 FragColor;\n"
+    if (!file.is_open())
+    {
+        std::cerr << "Failed to open shader file: " << filepath << std::endl;
+        return "";
+    }
 
-"void main()\n"
-"{\n"
-"    FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-"}\n";
+    buffer << file.rdbuf();
+    return buffer.str();
+}
+
 
 
 void creatSquare(unsigned int shaderProgram, unsigned int VAO, unsigned int VBO,  float xPos,  float yPos)
@@ -91,6 +93,13 @@ int main()
     }
 
     glfwSwapInterval(50);
+
+    //Load shaders 
+    std::string fragmentCode = loadShaderSource("shaders/fragment.glsl");
+    const char* fragmentShaderSource = fragmentCode.c_str();
+
+    std::string vertexCode = loadShaderSource("shaders/vertex.glsl");
+    const char* vertexShaderSource = vertexCode.c_str();
     
 
 
