@@ -16,3 +16,8 @@ target_link_libraries(from-pixels-to-blocks
     glfw
     glad::glad
 )
+file(GLOB SHADERS "shaders/*.glsl")
+
+foreach(shader ${SHADERS})
+    configure_file(${shader} ${CMAKE_BINARY_DIR}/shaders COPYONLY)
+endforeach()

@@ -4,16 +4,11 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <vector>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
-
-float vertices[] = {
-    -0.5f, 0.0f, 0.0f,
-    0.0f, 0.0f, 0.0f,
-    0.0f,  0.5f, 0.0f,
-    -0.5f, 0.0f, 0.0f,
-    -0.5, 0.5f, 0.0f,
-    0.0f,  0.5f, 0.0f
-};
 
 std::string loadShaderSource(const char* filepath)
 {
@@ -31,17 +26,74 @@ std::string loadShaderSource(const char* filepath)
 }
 
 
+std::vector<float> createCube()
+{
+    float size = 0.5f;
+
+    return {
+        // back face
+        -size, -size, -size,
+         size, -size, -size,
+         size,  size, -size,
+         size,  size, -size,
+        -size,  size, -size,
+        -size, -size, -size,
+
+        // front face
+        -size, -size,  size,
+         size, -size,  size,
+         size,  size,  size,
+         size,  size,  size,
+        -size,  size,  size,
+        -size, -size,  size,
+
+        // left face
+        -size,  size,  size,
+        -size,  size, -size,
+        -size, -size, -size,
+        -size, -size, -size,
+        -size, -size,  size,
+        -size,  size,  size,
+
+        // right face
+         size,  size,  size,
+         size,  size, -size,
+         size, -size, -size,
+         size, -size, -size,
+         size, -size,  size,
+         size,  size,  size,
+
+        // bottom face
+        -size, -size, -size,
+         size, -size, -size,
+         size, -size,  size,
+         size, -size,  size,
+        -size, -size,  size,
+        -size, -size, -size,
+
+        // top face
+        -size,  size, -size,
+         size,  size, -size,
+         size,  size,  size,
+         size,  size,  size,
+        -size,  size,  size,
+        -size,  size, -size
+    };
+}
+
+
 
 void creatSquare(unsigned int shaderProgram, unsigned int VAO, unsigned int VBO,  float xPos,  float yPos)
 {
     float size = 0.15f;
     float square_vertice[] = {
-    (-2*size + size*xPos), (size + size*yPos), 0.0f,
+    (-size + size*xPos), (size + size*yPos), 0.0f, //Face 1 begin
     (size + size*xPos), (size + size*yPos), 0.0f,
     (size + size*xPos),  (2*size + size*yPos), 0.0f,
-    (-2*size + size*xPos), (size + size*yPos), 0.0f,
-    (-2*size + size*xPos), (2*size + size*yPos), 0.0f,
-    (size + size*xPos),  (2*size + size*yPos), 0.0f
+    (-size + size*xPos), (size + size*yPos), 0.0f,
+    (-size + size*xPos), (2*size + size*yPos), 0.0f,
+    (size + size*xPos),  (2*size + size*yPos), 0.0f //Face 1 end
+
     };
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -49,6 +101,7 @@ void creatSquare(unsigned int shaderProgram, unsigned int VAO, unsigned int VBO,
     // 3. Initialiser les pointeurs d’attributs de sommets
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+
     glUseProgram(shaderProgram);
     glDrawArrays(GL_TRIANGLES, 0, 6);    
 }
@@ -77,6 +130,8 @@ int main()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     GLFWwindow* window = glfwCreateWindow(1600, 900, "Volumic vizualisation", NULL, NULL);
+    //glViewport(0, 0, 1600, 900);
+
     if (!window)
     {
         std::cout << "Failed to create window\n";
@@ -92,14 +147,19 @@ int main()
         return -1;
     }
 
-    glfwSwapInterval(50);
+    glfwSwapInterval(1);
 
     //Load shaders 
-    std::string fragmentCode = loadShaderSource("shaders/fragment.glsl");
+    std::string fragmentCode = loadShaderSource("from-pixels-to-blocks/shaders/fragment.glsl");
     const char* fragmentShaderSource = fragmentCode.c_str();
 
-    std::string vertexCode = loadShaderSource("shaders/vertex.glsl");
+    std::string vertexCode = loadShaderSource("from-pixels-to-blocks/shaders/vertex.glsl");
     const char* vertexShaderSource = vertexCode.c_str();
+
+    glEnable(GL_DEPTH_TEST);
+
+    glDepthFunc(GL_LESS);
+
     
 
 
@@ -119,12 +179,17 @@ int main()
     glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
     glCompileShader(fragmentShader);
 
+    if (vertexCode.empty()) std::cout << "Vertex shader empty!\n";
+    if (fragmentCode.empty()) std::cout << "Fragment shader empty!\n";
+
     unsigned int shaderProgram;
     shaderProgram = glCreateProgram();
 
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);
+
+    glEnable(GL_DEPTH_TEST);
 
     int success;
     char infoLog[512];
@@ -153,6 +218,8 @@ int main()
 
     //glUseProgram(shaderProgram);
 
+    std::vector<float> vertices = createCube();
+
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
@@ -163,27 +230,71 @@ int main()
     glBindVertexArray(VAO);
     // 2. Copier les sommets dans un tampon pour qu’OpenGL les utilise
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
     // 3. Initialiser les pointeurs d’attributs de sommets
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
 
-    float i = -10.0;
-    float j = -10.0;
+    
+
+    float angle = 0.0f;
+    float distance = 10.0f;
+
+
     while (!glfwWindowShouldClose(window))
     {
         glClearColor(0.2f, 0.3f, 0.8f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-        creatGrid(shaderProgram, VAO, VBO);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Swap buffers
+        glUseProgram(shaderProgram);
+        glBindVertexArray(VAO);
+
+        angle += 0.01f;
+        distance -= 0.01f;
+
+        if (distance <= 0.0){distance = 10.0f;}
+
+        //glm::mat4 model = glm::rotate(
+        //    glm::mat4(1.0f),
+        //    angle,
+        //    glm::vec3(1.0f, 1.0f, 0.0f)
+        //);
+
+        glm::mat4 model = glm::translate(
+            glm::mat4(1.0f),
+            glm::vec3(0.0f, 0.0f, -distance)
+        );
+
+        glUniformMatrix4fv(
+            glGetUniformLocation(shaderProgram, "model"),
+            1, GL_FALSE,
+            glm::value_ptr(model)
+        );
+        glm::mat4 view = glm::translate(
+        glm::mat4(1.0f),
+        glm::vec3(0.0f, 0.0f, -3.0f)   // move camera backward
+        );
+
+        glm::mat4 projection = glm::perspective(
+            glm::radians(45.0f),
+            1600.0f / 900.0f,
+            0.1f,
+            100.0f
+        );
+
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"),
+            1, GL_FALSE, glm::value_ptr(view));
+
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"),
+            1, GL_FALSE, glm::value_ptr(projection));
+
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
         glfwSwapBuffers(window);
         glfwPollEvents();
-        i++;
-        if (i>=9.0){i=-10.0; j++;}
-        if (j>=9.0){j=-10.0;}
     }
+
 
     glfwTerminate();
     return 0;
