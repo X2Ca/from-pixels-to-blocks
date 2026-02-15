@@ -12,6 +12,7 @@
 
 struct CameraMovement
 {
+    glm::vec3 angle;
     glm::vec3 cameraPos ;
     glm::vec3 cameraFront ;
     glm::vec3 cameraUp ;
@@ -37,6 +38,71 @@ std::string loadShaderSource(const char* filepath)
 void processInput(GLFWwindow* window, CameraMovement& camera)
 {
     const float cameraSpeed = 0.05f;
+    const float cameraTrajectoryRadius = 30.0f;
+    const float incrementAngle = 0.1f * cameraSpeed;
+
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS){
+        camera.angle.y += incrementAngle;
+
+        float radius = sqrt(pow(camera.cameraPos.x, 2.0) + pow(camera.cameraPos.y, 2.0) );
+
+        camera.cameraPos.x = cos(camera.angle.y) * radius;
+        camera.cameraPos.y = sin(camera.angle.y) * radius;
+
+        camera.cameraFront = glm::normalize(-camera.cameraPos);
+
+        camera.cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+
+
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS){
+        camera.angle.y += incrementAngle;
+
+        float radius = sqrt(pow(camera.cameraPos.x, 2.0) + pow(camera.cameraPos.y, 2.0) );
+
+        camera.cameraPos.x = cos(camera.angle.y) * radius;
+        camera.cameraPos.y = sin(camera.angle.y) * radius;
+
+        camera.cameraFront = glm::normalize(-camera.cameraPos);
+
+        camera.cameraUp = glm::vec3(0.0f, -1.0f, 0.0f);
+
+
+
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS){
+        camera.angle.x += incrementAngle;
+
+        float radius = sqrt(pow(camera.cameraPos.x, 2.0) + pow(camera.cameraPos.z, 2.0) );
+
+        camera.cameraPos.x = cos(camera.angle.x) * radius;
+        camera.cameraPos.z = sin(camera.angle.x) * radius;
+
+        camera.cameraFront = glm::normalize(-camera.cameraPos);
+
+        camera.cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+
+
+    }
+
+    
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS){
+        camera.angle.x += incrementAngle;
+        float radius = sqrt(pow(camera.cameraPos.x, 2.0) + pow(camera.cameraPos.z, 2.0) );
+
+        camera.cameraPos.x = cos(camera.angle.x) * radius;
+        camera.cameraPos.z = sin(camera.angle.x) * radius;
+
+        camera.cameraFront = glm::normalize(-camera.cameraPos);
+
+        camera.cameraUp = glm::vec3(0.0f, -1.0f, 0.0f);
+
+
+    }
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         camera.cameraPos += cameraSpeed * camera.cameraFront;
@@ -228,6 +294,7 @@ int main()
     //Init movement var
     CameraMovement camera;
 
+    camera.angle       = glm::vec3(0.0f, 0.0f, 0.0f);
     camera.cameraPos   = glm::vec3(0.0f, 0.0f,  3.0f);
     camera.cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
     camera.cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
@@ -362,6 +429,8 @@ int main()
         // Call the keyboard interpreter
         processInput(window, camera);
 
+        
+
         // Set view lookat
         view = glm::lookAt(camera.cameraPos, camera.cameraPos + camera.cameraFront, camera.cameraUp);
 
@@ -396,7 +465,7 @@ int main()
 
         for (float i = -((float) (WIDTH*1.5)/2); i<=((float) (WIDTH*1.5)/2); i+=1.5f){
             for (float j = -((float) (HEIGHT*1.5)/2); j<=((float) (HEIGHT*1.5)/2); j+=1.5f){
-                renderCube(model, projection, shaderProgram, i, 1.0f, j);
+                renderCube(model, projection, shaderProgram, i, 0.0f, j);
             }
         }
 
