@@ -10,6 +10,13 @@
 #include <glm/gtc/type_ptr.hpp>
 
 
+struct CameraMovement
+{
+    glm::vec3 cameraPos ;
+    glm::vec3 cameraFront ;
+    glm::vec3 cameraUp ;
+};
+
 std::string loadShaderSource(const char* filepath)
 {
     std::ifstream file(filepath);
@@ -24,6 +31,30 @@ std::string loadShaderSource(const char* filepath)
     buffer << file.rdbuf();
     return buffer.str();
 }
+
+
+
+void processInput(GLFWwindow* window, CameraMovement& camera)
+{
+    const float cameraSpeed = 0.05f;
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        camera.cameraPos += cameraSpeed * camera.cameraFront;
+
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        camera.cameraPos -= cameraSpeed * camera.cameraFront;
+
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        camera.cameraPos -= glm::normalize(
+            glm::cross(camera.cameraFront, camera.cameraUp)
+        ) * cameraSpeed;
+
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        camera.cameraPos += glm::normalize(
+            glm::cross(camera.cameraFront, camera.cameraUp)
+        ) * cameraSpeed;
+}
+
 
 
 std::vector<float> createCube()
@@ -81,7 +112,32 @@ std::vector<float> createCube()
     };
 }
 
+void renderCube( glm::mat4 model, glm::mat4 projection, unsigned int shaderProgram, float xPos, float yPos, float zPos)
+{
+    model = glm::translate(
+            glm::mat4(1.0f),
+            glm::vec3(xPos, yPos, zPos)
+        );
 
+    glUniformMatrix4fv(
+            glGetUniformLocation(shaderProgram, "model"),
+            1, GL_FALSE,
+            glm::value_ptr(model)
+        );
+
+    projection = glm::perspective(
+            glm::radians(45.0f),
+            1600.0f / 900.0f,
+            0.1f,
+            100.0f
+        );
+
+
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"),
+            1, GL_FALSE, glm::value_ptr(projection));
+
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+}
 
 void creatSquare(unsigned int shaderProgram, unsigned int VAO, unsigned int VBO,  float xPos,  float yPos)
 {
@@ -119,6 +175,43 @@ void creatGrid(unsigned int shaderProgram, unsigned int VAO, unsigned int VBO)
 int main()
 {
 
+    // Init the user vars
+    int WIDTH;
+    int HEIGHT;
+    bool finished = false;
+
+    while (!finished)
+    {
+        std::cout << "======================================\n";
+        std::cout << "Welcome to the visualisation program\n";
+        std::cout << "======================================\n";
+        std::cout << "Please select the dimension of your visualisation grid with positive integer ;) \n";
+
+        std::cout << "Width? :\n";
+        std::cin >> WIDTH;
+
+        if( WIDTH <=0 ){
+            std::cout << "Please enter a positive number...\n";
+            continue;
+        }
+
+        std::cout << "Height? :\n";
+        std::cin >> HEIGHT;
+
+        if (HEIGHT <=0){
+            std::cout << "Please enter a positive number...\n";
+            continue;
+        }
+
+    finished = true ;
+    }
+
+    std::cout << WIDTH << " * " << HEIGHT << "\n";
+
+
+
+    //init glfw and window
+
     if (!glfwInit())
     {
         std::cout << "Failed to initialize GLFW\n";
@@ -130,7 +223,22 @@ int main()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     GLFWwindow* window = glfwCreateWindow(1600, 900, "Volumic vizualisation", NULL, NULL);
-    //glViewport(0, 0, 1600, 900);
+
+
+    //Init movement var
+    CameraMovement camera;
+
+    camera.cameraPos   = glm::vec3(0.0f, 0.0f,  3.0f);
+    camera.cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+    camera.cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
+
+    glm::mat4 view;
+    glm::mat4 model;
+    glm::mat4 projection;
+
+    //Init our key callback
+
+    //glfwSetKeyCallback(window, key_callback);
 
     if (!window)
     {
@@ -236,12 +344,13 @@ int main()
     glEnableVertexAttribArray(0);
 
 
+
+
+
     
 
+
     float angle = 0.0f;
-    float distance = 10.0f;
-
-
     while (!glfwWindowShouldClose(window))
     {
         glClearColor(0.2f, 0.3f, 0.8f, 1.0f);
@@ -250,20 +359,15 @@ int main()
         glUseProgram(shaderProgram);
         glBindVertexArray(VAO);
 
-        angle += 0.01f;
-        distance -= 0.01f;
+        // Call the keyboard interpreter
+        processInput(window, camera);
 
-        if (distance <= 0.0){distance = 10.0f;}
+        // Set view lookat
+        view = glm::lookAt(camera.cameraPos, camera.cameraPos + camera.cameraFront, camera.cameraUp);
 
-        //glm::mat4 model = glm::rotate(
-        //    glm::mat4(1.0f),
-        //    angle,
-        //    glm::vec3(1.0f, 1.0f, 0.0f)
-        //);
-
-        glm::mat4 model = glm::translate(
+        model = glm::translate(
             glm::mat4(1.0f),
-            glm::vec3(0.0f, 0.0f, -distance)
+            glm::vec3(0.0f, 0.0f, 0.0f)
         );
 
         glUniformMatrix4fv(
@@ -271,10 +375,13 @@ int main()
             1, GL_FALSE,
             glm::value_ptr(model)
         );
-        glm::mat4 view = glm::translate(
-        glm::mat4(1.0f),
-        glm::vec3(0.0f, 0.0f, -3.0f)   // move camera backward
-        );
+        //view = glm::translate(
+        //glm::mat4(1.0f),
+        //glm::vec3(0.0f, 1.0f, -30.0f)   // move camera backward
+        //);
+
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"),
+            1, GL_FALSE, glm::value_ptr(view));
 
         glm::mat4 projection = glm::perspective(
             glm::radians(45.0f),
@@ -283,13 +390,17 @@ int main()
             100.0f
         );
 
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"),
-            1, GL_FALSE, glm::value_ptr(view));
+        angle += 0.01f;
 
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"),
-            1, GL_FALSE, glm::value_ptr(projection));
 
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        for (float i = -((float) (WIDTH*1.5)/2); i<=((float) (WIDTH*1.5)/2); i+=1.5f){
+            for (float j = -((float) (HEIGHT*1.5)/2); j<=((float) (HEIGHT*1.5)/2); j+=1.5f){
+                renderCube(model, projection, shaderProgram, i, 1.0f, j);
+            }
+        }
+
+        
 
         glfwSwapBuffers(window);
         glfwPollEvents();
