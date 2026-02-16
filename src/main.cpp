@@ -26,6 +26,7 @@ struct Function
     float x;
     float y;
     std::string expresion;
+    std::vector<char>ShuntingYardExpr;
 };
 
 std::string loadShaderSource(const char* filepath)
@@ -53,59 +54,92 @@ void EnterFunction(Function& function)
 {
 
     std::cout << "Enter your function (x,y)\n";
-    std::cin >> function.expresion ;
 
-    std::replace(function.expresion.begin(), function.expresion.end(), ' ', '_');
+     // Clear leftover newline in the input buffer
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+    // Use getline to read the whole line including spaces
+    std::getline(std::cin, function.expresion);
+
+    // Remove all spaces
+    function.expresion.erase(
+        std::remove(function.expresion.begin(), function.expresion.end(), ' '),
+        function.expresion.end()
+    );
 
     std::cout << "You wrote : " << function.expresion  << "\n";
 }
 
-float ComputeFunction(Function& function, float x , float y)
+void ShuntingYard(Function& function)
 {
 
-    std::stack<float> output;
+    //TODO: handle function and parenthesis 
+
+    std::stack<char> output;
     std::stack<char> operators;
+    std::stack<char> tempOut;
 
     char temp;
-    int operatorsNb = 0;
+    float tempResult = 0.0f;
     std::string expr = function.expresion;
 
     //replace variable by their expression
     // Not float frendly !!
-    char xStr = std::to_string(x)[0];
-    char yStr = std::to_string(y)[0];
+    //char xStr = std::to_string(x)[0];
+    //char yStr = std::to_string(y)[0];
 
-    std::replace(expr.begin(), expr.end(), 'x', xStr);
+    //std::replace(expr.begin(), expr.end(), 'x', xStr);
 
-    std::replace(expr.begin(), expr.end(), 'y', yStr);
+    //std::replace(expr.begin(), expr.end(), 'y', yStr);
 
     for (int i=0; i <= expr.size(); i++){
         temp = expr[i];
 
         std::cout << temp << "\n";
-        if (std::isdigit(temp)){
-            output.push((int) temp);
+        if (std::isdigit(temp) || temp == 'x' || temp == 'y'){
+            output.push(temp);
             //std::cout << "digit\n";
-        } else if ( temp != '_'){
+        } else if (temp != '(' && temp != ')'){
             operators.push(temp);
-            operatorsNb ++;
         }
     }
 
-    //output.push(operators.top());
-    //operators.pop();
-    while(!operators.empty()) {
+    while (!operators.empty()) {
         output.push(operators.top());
         operators.pop();
     }
 
-    while(!output.empty()) {
-        cout << (char) output.top() << " ";
-        output.pop();
+    std::stack<char> tempV(output);  // make a copy
+    std::vector<char> v;
+
+    while (!tempV.empty()) {
+        v.push_back(tempV.top());
+        tempV.pop();
     }
 
+    std::reverse(v.begin(), v.end());
+    function.ShuntingYardExpr = v;
+
+    std::cout << "RPN Expresion :";
+    for (char c : function.ShuntingYardExpr) std::cout << c << " ";
+    std::cout << '\n';
 
 
+    while(!output.empty()) {
+        //std::cout <<((char) output.top()) << " ";
+        output.pop();
+    }
+    //std::cout << '\n';
+
+
+    
+
+
+    ;
+}
+
+float RPNCalculator(Function& function)
+{
     return 0.0f;
 }
 
@@ -384,10 +418,10 @@ int main()
     {
         std::cout << "MODE : Function\n"; 
         EnterFunction(UserFunction);
-        std::cout << ComputeFunction(UserFunction, 1.0f, 1.0f) << "\n";
+        ShuntingYard(UserFunction);
     }
-    if (MODE == 2){std::cout <<"MODE : Image\n";}
-    if (MODE == 3){std::cout <<"MODE : Video\n";}
+    if (MODE == 2){std::cout <<"MODE : Image\n" << "This is not implemented yet...\n";}
+    if (MODE == 3){std::cout <<"MODE : Video\n" << "This is not implemented yet...\n";}
 
 
 
