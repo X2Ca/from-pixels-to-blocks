@@ -26,7 +26,7 @@ struct Function
     float x;
     float y;
     std::string expresion;
-    std::vector<char>ShuntingYardExpr;
+    std::vector<std::string>ShuntingYardExpr;
 };
 
 std::string loadShaderSource(const char* filepath)
@@ -75,11 +75,11 @@ void ShuntingYard(Function& function)
 
     //TODO: handle function and parenthesis 
 
-    std::stack<char> output;
-    std::stack<char> operators;
-    std::stack<char> tempOut;
+    std::stack<std::string> output;
+    std::stack<std::string> operators;
+    std::stack<std::string> tempOut;
 
-    char temp;
+    std::string temp;
     float tempResult = 0.0f;
     std::string expr = function.expresion;
 
@@ -96,10 +96,10 @@ void ShuntingYard(Function& function)
         temp = expr[i];
 
         std::cout << temp << "\n";
-        if (std::isdigit(temp) || temp == 'x' || temp == 'y'){
+        if (std::isdigit(temp[0]) || temp[0] == 'x' || temp[0] == 'y'){
             output.push(temp);
             //std::cout << "digit\n";
-        } else if (temp != '(' && temp != ')'){
+        } else if (temp[0] != '(' && temp[0] != ')'){
             operators.push(temp);
         }
     }
@@ -109,8 +109,8 @@ void ShuntingYard(Function& function)
         operators.pop();
     }
 
-    std::stack<char> tempV(output);  // make a copy
-    std::vector<char> v;
+    std::stack<std::string> tempV(output);  // make a copy
+    std::vector<std::string> v;
 
     while (!tempV.empty()) {
         v.push_back(tempV.top());
@@ -121,26 +121,40 @@ void ShuntingYard(Function& function)
     function.ShuntingYardExpr = v;
 
     std::cout << "RPN Expresion :";
-    for (char c : function.ShuntingYardExpr) std::cout << c << " ";
+    for (std::string c : function.ShuntingYardExpr) std::cout << c << " ";
     std::cout << '\n';
-
-
-    while(!output.empty()) {
-        //std::cout <<((char) output.top()) << " ";
-        output.pop();
-    }
-    //std::cout << '\n';
-
-
-    
-
-
-    ;
 }
 
-float RPNCalculator(Function& function)
+
+float RPNCalculator(Function& function, float x, float y)
 {
-    return 0.0f;
+
+    std::stack<double> s;
+    std::vector<std::string> tokens = function.ShuntingYardExpr;
+
+
+    for (const std::string& token : tokens) {
+        if (std::isdigit(token[0])) {  // simple check for number
+            s.push(std::stod(token));
+        }
+        else if (token == "x") s.push(x);
+        else if (token == "y") s.push(y);
+         else {  // operator
+            if (s.size() < 2) {
+                //std::cerr << "Invalid expression: not enough operands\n";
+                continue;
+            }
+            double b = s.top(); s.pop();
+            double a = s.top(); s.pop();
+            if (token == "+"){ s.push(a+b);}
+            else if (token == "-"){ s.push(a-b);}
+            else if (token == "*"){ s.push(a*b);}
+            else if (token == "/"){ s.push(a/b);}
+            else {s.push(a+b);}
+        }
+    }
+
+    return (float) s.top();
 }
 
 void processInput(GLFWwindow* window, CameraMovement& camera)
@@ -419,6 +433,7 @@ int main()
         std::cout << "MODE : Function\n"; 
         EnterFunction(UserFunction);
         ShuntingYard(UserFunction);
+        //std::cout << RPNCalculator(UserFunction, 1.0f, 1.0f);
     }
     if (MODE == 2){std::cout <<"MODE : Image\n" << "This is not implemented yet...\n";}
     if (MODE == 3){std::cout <<"MODE : Video\n" << "This is not implemented yet...\n";}
@@ -613,13 +628,20 @@ int main()
         angle += 0.01f;
 
 
-        for (float i = -((float) (WIDTH*1.5)/2); i<=((float) (WIDTH*1.5)/2); i+=1.5f){
-            for (float j = -((float) (HEIGHT*1.5)/2); j<=((float) (HEIGHT*1.5)/2); j+=1.5f){
-                renderCube(model, projection, shaderProgram, i, i*j , j);
-                wave += 0.05f;
+        if ((int) MODE == 1)
+        {
+            for (float i = -((float) (WIDTH*1.5)/2); i<=((float) (WIDTH*1.5)/2); i+=1.5f){
+                for (float j = -((float) (HEIGHT*1.5)/2); j<=((float) (HEIGHT*1.5)/2); j+=1.5f){
+                    renderCube(model, projection, shaderProgram, i, RPNCalculator(UserFunction, i, j) , j);
+                }
+            }
+        } else {
+            for (float i = -((float) (WIDTH*1.5)/2); i<=((float) (WIDTH*1.5)/2); i+=1.5f){
+                for (float j = -((float) (HEIGHT*1.5)/2); j<=((float) (HEIGHT*1.5)/2); j+=1.5f){
+                    renderCube(model, projection, shaderProgram, i, i*j , j);
+                }
             }
         }
-
         
 
         glfwSwapBuffers(window);
