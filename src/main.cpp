@@ -125,7 +125,6 @@ void ShuntingYard(Function& function)
     std::cout << '\n';
 }
 
-
 float RPNCalculator(Function& function, float x, float y)
 {
 
@@ -159,7 +158,7 @@ float RPNCalculator(Function& function, float x, float y)
 
 void processInput(GLFWwindow* window, CameraMovement& camera)
 {
-    const float cameraSpeed = 0.05f;
+    const float cameraSpeed = 0.25f;
     const float cameraTrajectoryRadius = 30.0f;
     const float incrementAngle = 0.1f * cameraSpeed;
 
@@ -242,8 +241,6 @@ void processInput(GLFWwindow* window, CameraMovement& camera)
             glm::cross(camera.cameraFront, camera.cameraUp)
         ) * cameraSpeed;
 }
-
-
 
 std::vector<float> createCube()
 {

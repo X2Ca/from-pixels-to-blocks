@@ -12,6 +12,7 @@ The result is a stylized yet data-driven volumetric interpretation that bridges 
 
 ## Features
 - 2D image parsing
+- Function parsing
 - Color-driven spatial analysis
 - Grid-based square generation
 - Volumetric cube transformation
