@@ -8,7 +8,10 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
+#include <algorithm>
+//#include "opencv2/core.hpp"
+#include <stack>
+using namespace std;
 
 struct CameraMovement
 {
@@ -16,6 +19,13 @@ struct CameraMovement
     glm::vec3 cameraPos ;
     glm::vec3 cameraFront ;
     glm::vec3 cameraUp ;
+};
+
+struct Function 
+{
+    float x;
+    float y;
+    std::string expresion;
 };
 
 std::string loadShaderSource(const char* filepath)
@@ -34,6 +44,70 @@ std::string loadShaderSource(const char* filepath)
 }
 
 
+float normalize(int MAX_Z, int MIN_Z, float value)
+{
+    return 0.0f;
+}
+
+void EnterFunction(Function& function)
+{
+
+    std::cout << "Enter your function (x,y)\n";
+    std::cin >> function.expresion ;
+
+    std::replace(function.expresion.begin(), function.expresion.end(), ' ', '_');
+
+    std::cout << "You wrote : " << function.expresion  << "\n";
+}
+
+float ComputeFunction(Function& function, float x , float y)
+{
+
+    std::stack<float> output;
+    std::stack<char> operators;
+
+    char temp;
+    int operatorsNb = 0;
+    std::string expr = function.expresion;
+
+    //replace variable by their expression
+    // Not float frendly !!
+    char xStr = std::to_string(x)[0];
+    char yStr = std::to_string(y)[0];
+
+    std::replace(expr.begin(), expr.end(), 'x', xStr);
+
+    std::replace(expr.begin(), expr.end(), 'y', yStr);
+
+    for (int i=0; i <= expr.size(); i++){
+        temp = expr[i];
+
+        std::cout << temp << "\n";
+        if (std::isdigit(temp)){
+            output.push((int) temp);
+            //std::cout << "digit\n";
+        } else if ( temp != '_'){
+            operators.push(temp);
+            operatorsNb ++;
+        }
+    }
+
+    //output.push(operators.top());
+    //operators.pop();
+    while(!operators.empty()) {
+        output.push(operators.top());
+        operators.pop();
+    }
+
+    while(!output.empty()) {
+        cout << (char) output.top() << " ";
+        output.pop();
+    }
+
+
+
+    return 0.0f;
+}
 
 void processInput(GLFWwindow* window, CameraMovement& camera)
 {
@@ -244,7 +318,13 @@ int main()
     // Init the user vars
     int WIDTH;
     int HEIGHT;
+    int MODE;
     bool finished = false;
+
+    Function UserFunction;
+    
+
+
 
     while (!finished)
     {
@@ -275,6 +355,42 @@ int main()
     std::cout << WIDTH << " * " << HEIGHT << "\n";
 
 
+    finished = false;
+
+    system("cls");
+
+    while (!finished)
+    {
+        std::cout << "======================================\n";
+        std::cout << "Choose your mode\n";
+        std::cout << "======================================\n";
+        std::cout << "1 : Function in 3D Space 2: Image 3: Video\n";
+
+        std::cout << "Enter the number:\n";
+        std::cin >> MODE;
+
+        if( MODE != 1 && MODE != 2 && MODE != 3 ){
+            std::cout << "Please enter a positive number...\n";
+            MODE = NULL;
+            continue;
+        }
+
+    finished = true ;
+    }
+    system("cls");
+
+
+    if (MODE == 1)
+    {
+        std::cout << "MODE : Function\n"; 
+        EnterFunction(UserFunction);
+        std::cout << ComputeFunction(UserFunction, 1.0f, 1.0f) << "\n";
+    }
+    if (MODE == 2){std::cout <<"MODE : Image\n";}
+    if (MODE == 3){std::cout <<"MODE : Video\n";}
+
+
+
 
     //init glfw and window
 
@@ -295,7 +411,7 @@ int main()
     CameraMovement camera;
 
     camera.angle       = glm::vec3(0.0f, 0.0f, 0.0f);
-    camera.cameraPos   = glm::vec3(0.0f, 0.0f,  3.0f);
+    camera.cameraPos   = glm::vec3(0.0f, ((float) HEIGHT/2),  3.0f);
     camera.cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
     camera.cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
 
@@ -418,6 +534,7 @@ int main()
 
 
     float angle = 0.0f;
+    float wave = 0.0f;
     while (!glfwWindowShouldClose(window))
     {
         glClearColor(0.2f, 0.3f, 0.8f, 1.0f);
@@ -462,10 +579,10 @@ int main()
         angle += 0.01f;
 
 
-
         for (float i = -((float) (WIDTH*1.5)/2); i<=((float) (WIDTH*1.5)/2); i+=1.5f){
             for (float j = -((float) (HEIGHT*1.5)/2); j<=((float) (HEIGHT*1.5)/2); j+=1.5f){
-                renderCube(model, projection, shaderProgram, i, 0.0f, j);
+                renderCube(model, projection, shaderProgram, i, i*j , j);
+                wave += 0.05f;
             }
         }
 
