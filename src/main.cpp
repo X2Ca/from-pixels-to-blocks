@@ -44,7 +44,6 @@ std::string loadShaderSource(const char* filepath)
     return buffer.str();
 }
 
-
 float normalize(int MAX_Z, int MIN_Z, float value)
 {
     return 0.0f;
@@ -70,6 +69,33 @@ void EnterFunction(Function& function)
     std::cout << "You wrote : " << function.expresion  << "\n";
 }
 
+int getPrecedence(char op) {
+    switch(op) {
+        case '+': return 2;
+        case '-': return 2;
+        case '*': return 3;
+        case '/': return 3;
+        case '^': return 4;
+        default: return 0;
+    }
+}
+
+bool getLeftAssociativity(char op) {
+    switch(op){
+        case '+': return true;
+        case '-': return true;
+        case '*': return true;
+        case '/': return true;
+        case '^': return false;
+        default: return false;
+    }
+}
+
+bool isOperator(char c) {
+    return c == '+' || c == '-' || c == '*' || 
+           c == '/' || c == '%' || c == '^';
+}
+
 void ShuntingYard(Function& function)
 {
 
@@ -83,25 +109,42 @@ void ShuntingYard(Function& function)
     float tempResult = 0.0f;
     std::string expr = function.expresion;
 
-    //replace variable by their expression
-    // Not float frendly !!
-    //char xStr = std::to_string(x)[0];
-    //char yStr = std::to_string(y)[0];
 
-    //std::replace(expr.begin(), expr.end(), 'x', xStr);
-
-    //std::replace(expr.begin(), expr.end(), 'y', yStr);
 
     for (int i=0; i <= expr.size(); i++){
+        //init var used to detect function ( like sin )
+        int j=0;
+        bool function = false;
+        //using a temp var for common processing 
         temp = expr[i];
 
-        std::cout << temp << "\n";
+
         if (std::isdigit(temp[0]) || temp[0] == 'x' || temp[0] == 'y'){
             output.push(temp);
             //std::cout << "digit\n";
-        } else if (temp[0] != '(' && temp[0] != ')'){
+        } else if (std::isalpha(temp[0]) != 0){
+            while (!function){
+                j++;
+                if (std::isalpha(expr[j+i]) != 0) continue;
+                else function = true; operators.push(expr.substr(i, j)); i += j;
+            }
+        } else if (isOperator(temp[0])) {
+            if (operators.empty()) operators.push(temp);
+            else { 
+                while(!operators.empty() && operators.top()[0] != '(' && (getPrecedence(operators.top()[0]) > getPrecedence(temp[0]) || (getPrecedence(temp[0]) == getPrecedence(operators.top()[0]) && getLeftAssociativity(temp[0])))){
+                    output.push(operators.top()) ; operators.pop(); 
+                }
             operators.push(temp);
+            }
+        } else if ((temp[0] == '(')){
+            operators.push(temp);
+        } else if (temp[0] == ')'){
+                while( !operators.empty() && operators.top()[0] != '('){
+                    output.push(operators.top()) ; operators.pop();
+                }
+                if (!operators.empty()) operators.pop(); // Pop the left parenthesis
         }
+
     }
 
     while (!operators.empty()) {
@@ -149,6 +192,7 @@ float RPNCalculator(Function& function, float x, float y)
             else if (token == "-"){ s.push(a-b);}
             else if (token == "*"){ s.push(a*b);}
             else if (token == "/"){ s.push(a/b);}
+            else if (token == "^"){ s.push(pow(a,b));}
             else {s.push(a+b);}
         }
     }
