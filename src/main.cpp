@@ -168,6 +168,27 @@ void ShuntingYard(Function& function)
     std::cout << '\n';
 }
 
+double applyFunctionRPN(const std::string& func, std::stack<double>& s) {
+    if (func == "sqrt") {
+        double a = s.top(); s.pop();
+        return std::sqrt(a);
+    }
+    else if (func == "sin") {
+        double a = s.top(); s.pop();
+        return std::sin(a);
+    }
+    else if (func == "cos") {
+        double a = s.top(); s.pop();
+        return std::cos(a);
+    }
+    else if (func == "exp"){
+        double a = s.top(); s.pop();
+        return std::exp(a);
+    }
+
+    throw std::runtime_error("Unknown function");
+}
+
 float RPNCalculator(Function& function, float x, float y)
 {
 
@@ -181,7 +202,7 @@ float RPNCalculator(Function& function, float x, float y)
         }
         else if (token == "x") s.push(x);
         else if (token == "y") s.push(y);
-         else {  // operator
+        else if (isOperator(token[0]))  {  // operator
             if (s.size() < 2) {
                 //std::cerr << "Invalid expression: not enough operands\n";
                 continue;
@@ -193,7 +214,9 @@ float RPNCalculator(Function& function, float x, float y)
             else if (token == "*"){ s.push(a*b);}
             else if (token == "/"){ s.push(a/b);}
             else if (token == "^"){ s.push(pow(a,b));}
-            else {s.push(a+b);}
+        }
+        else {
+            s.push(applyFunctionRPN(token, s));
         }
     }
 
