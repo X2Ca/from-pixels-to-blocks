@@ -6,7 +6,7 @@ Created by: Cocoboyy
 ## Overview
 This project explores the transformation of 2D image data into volumetric 3D block-based models.
 
-Using color as the primary guiding parameter—combined with structural and spatial analysis—the system reconstructs images into layered modular 3D forms.
+Using color as the primary guiding parameter, combined with structural and spatial analysis—the system reconstructs images into layered modular 3D forms.
 
 The result is a stylized yet data-driven volumetric interpretation that bridges digital imagery and three-dimensional abstraction.
 
@@ -25,9 +25,9 @@ The result is a stylized yet data-driven volumetric interpretation that bridges 
 - GLFW / GLAD 
 
 ## Roadmap
-- [ ] Generate full 2D grid
-- [ ] Convert squares into cubes
-- [ ] Add lighting & shading
+- [x] Generate full 2D grid
+- [x] Convert squares into cubes
+- [x] Add lighting & shading
 - [ ] Export 3D model
 - [ ] Optimize performance
 
