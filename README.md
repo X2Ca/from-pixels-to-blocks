@@ -46,7 +46,7 @@ cd from-pixels-to-blocks
 
 ### 🔹 If Using CMake (Recommended)
 
-```markdown
+
 ## Build
 
 ```bash
