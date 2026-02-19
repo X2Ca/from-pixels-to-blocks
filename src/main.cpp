@@ -22,7 +22,6 @@ struct CameraMovement
     glm::vec3 cameraFront ;
     glm::vec3 cameraUp ;
 };
-
 struct Function 
 {
     float yMin;
@@ -30,7 +29,6 @@ struct Function
     std::string expresion;
     std::vector<std::string>ShuntingYardExpr;
 };
-
 struct Image
 {
     Mat image;
@@ -156,6 +154,30 @@ std::vector<float> GrayScaleGridConverter(Image& image, const int HEIGHT, const 
 
 
     return VolumGrid;
+}
+
+int SobelEdgeDetection(Image& image){
+    
+    cv::Mat sobelx, sobely, gradient;
+
+    Mat img = image.image;
+
+    // Apply Sobel operator
+    cv::Sobel(img, sobelx, CV_64F, 1, 0, 3);
+    cv::Sobel(img, sobely, CV_64F, 0, 1, 3);
+
+    // Compute gradient magnitude
+    cv::magnitude(sobelx, sobely, gradient);
+
+    // Convert to 8-bit image
+    cv::Mat gradient_abs;
+    cv::convertScaleAbs(gradient, gradient_abs);
+
+    // Display result
+    cv::imshow("Sobel Edge Detection", gradient_abs);
+
+    cv::waitKey(0);
+    return 1;
 }
 
 int getPrecedence(char op) {
@@ -319,17 +341,29 @@ float RPNCalculator(Function& function, float x, float y)
 
 void processInput(GLFWwindow* window, CameraMovement& camera)
 {
-    const float cameraSpeed = 0.25f;
+    const float cameraSpeed = 0.5f;
     const float cameraTrajectoryRadius = 30.0f;
-    const float incrementAngle = 0.1f * cameraSpeed;
+    const float incrementAngle = 1.0f * cameraSpeed;
 
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS){
         camera.angle.y += incrementAngle;
 
-        float radius = sqrt(pow(camera.cameraPos.x, 2.0) + pow(camera.cameraPos.y, 2.0) );
+        if(camera.angle.y > 89.0f)
+            camera.angle.y =  89.0f;
+        if(camera.angle.y < -89.0f)
+            camera.angle.y = -89.0f;
 
-        camera.cameraPos.x = cos(camera.angle.y) * radius;
-        camera.cameraPos.y = sin(camera.angle.y) * radius;
+        float radius = sqrt(camera.cameraPos.x*camera.cameraPos.x + camera.cameraPos.y*camera.cameraPos.y + camera.cameraPos.z*camera.cameraPos.z  );
+        
+
+        float yaw   = glm::radians(camera.angle.x);
+        float pitch = glm::radians(camera.angle.y);
+
+        camera.cameraPos.x = cos(yaw) * cos(pitch);
+        camera.cameraPos.z = sin(yaw) * cos(pitch);
+        camera.cameraPos.y = sin(pitch);
+
+        camera.cameraPos = camera.cameraPos * radius;
 
         camera.cameraFront = glm::normalize(-camera.cameraPos);
 
@@ -340,28 +374,41 @@ void processInput(GLFWwindow* window, CameraMovement& camera)
     }
 
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS){
-        camera.angle.y += incrementAngle;
+        camera.angle.y -= incrementAngle;
 
-        float radius = sqrt(pow(camera.cameraPos.x, 2.0) + pow(camera.cameraPos.y, 2.0) );
+        if(camera.angle.y > 89.0f)
+            camera.angle.y =  89.0f;
+        if(camera.angle.y < -89.0f)
+            camera.angle.y = -89.0f;
 
-        camera.cameraPos.x = cos(camera.angle.y) * radius;
-        camera.cameraPos.y = sin(camera.angle.y) * radius;
+        float radius = sqrt(camera.cameraPos.x*camera.cameraPos.x + camera.cameraPos.y*camera.cameraPos.y + camera.cameraPos.z*camera.cameraPos.z  );
+        
+        float yaw   = glm::radians(camera.angle.x);
+        float pitch = glm::radians(camera.angle.y);
+
+        camera.cameraPos.x = cos(yaw) * cos(pitch);
+        camera.cameraPos.z = sin(yaw) * cos(pitch);
+        camera.cameraPos.y = sin(pitch);
+
+        camera.cameraPos = camera.cameraPos * radius;
 
         camera.cameraFront = glm::normalize(-camera.cameraPos);
 
-        camera.cameraUp = glm::vec3(0.0f, -1.0f, 0.0f);
+        camera.cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
 
 
     }
 
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS){
-        camera.angle.x += incrementAngle;
+        camera.angle.x -= incrementAngle;
+
+        float yaw = glm::radians(camera.angle.x);
 
         float radius = sqrt(pow(camera.cameraPos.x, 2.0) + pow(camera.cameraPos.z, 2.0) );
 
-        camera.cameraPos.x = cos(camera.angle.x) * radius;
-        camera.cameraPos.z = sin(camera.angle.x) * radius;
+        camera.cameraPos.x = cos(yaw) * radius;
+        camera.cameraPos.z = sin(yaw) * radius;
 
         camera.cameraFront = glm::normalize(-camera.cameraPos);
 
@@ -374,14 +421,17 @@ void processInput(GLFWwindow* window, CameraMovement& camera)
     
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS){
         camera.angle.x += incrementAngle;
+
+        float yaw = glm::radians(camera.angle.x);
+
         float radius = sqrt(pow(camera.cameraPos.x, 2.0) + pow(camera.cameraPos.z, 2.0) );
 
-        camera.cameraPos.x = cos(camera.angle.x) * radius;
-        camera.cameraPos.z = sin(camera.angle.x) * radius;
+        camera.cameraPos.x = cos(yaw) * radius;
+        camera.cameraPos.z = sin(yaw) * radius;
 
         camera.cameraFront = glm::normalize(-camera.cameraPos);
 
-        camera.cameraUp = glm::vec3(0.0f, -1.0f, 0.0f);
+        camera.cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
 
     }
@@ -606,6 +656,7 @@ int main()
         std::cout <<"MODE : Image\n"; 
         loadImage(UserImage);
         UserImage.grid = GrayScaleGridConverter(UserImage, HEIGHT, WIDTH);
+        //SobelEdgeDetection(UserImage);
     }
     if (MODE == 3){std::cout <<"MODE : Video\n" << "This is not implemented yet...\n";}
 
@@ -624,7 +675,7 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* window = glfwCreateWindow(1600, 900, "Volumic vizualisation", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(1600, 1000, "Volumic vizualisation", NULL, NULL);
 
 
     //Init movement var
@@ -793,7 +844,7 @@ int main()
 
         glm::mat4 projection = glm::perspective(
             glm::radians(45.0f),
-            1600.0f / 900.0f,
+            1600.0f / 1000.0f,
             0.1f,
             100.0f
         );
@@ -812,6 +863,9 @@ int main()
             }
         } else if (MODE == 2) {
             int counter = 0;
+            //Compute minma
+            glm::vec4 MinMax = glm::vec4(*std::min_element(UserImage.grid.begin(), UserImage.grid.end()), *std::max_element(UserImage.grid.begin(), UserImage.grid.end()), 0.0f, 0.0f);
+            glUniform4fv(glGetUniformLocation(shaderProgram, "MinMax"), 1, glm::value_ptr(MinMax));
             for (float i = -((float) (WIDTH*1.5)/2); i<((float) (WIDTH*1.5)/2); i+=1.5f){
                 for (float j = -((float) (HEIGHT*1.5)/2); j<((float) (HEIGHT*1.5)/2); j+=1.5f){
                     renderCube(model, projection, shaderProgram, i, UserImage.grid[counter] , j);
