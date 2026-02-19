@@ -26,6 +26,47 @@ The result is a stylized yet data-driven volumetric interpretation that bridges 
 - GLSL
 - GLFW / GLAD 
 
+## Requirements
+
+- C++17 compatible compiler (GCC 9+, Clang 10+, MSVC 2019+)
+- CMake 3.15+
+- OpenCV 4.12.0+
+- GLSL 
+- GLFW / GLAD 3.4#1
+
+## Clone the Repository
+
+```bash
+git clone https://github.com/X2Ca/from-pixels-to-blocks.git
+cd from-pixels-to-blocks
+
+```
+
+## Build Instructions
+
+### 🔹 If Using CMake (Recommended)
+
+```markdown
+## Build
+
+```bash
+mkdir build
+cd build
+cmake ..
+cmake --build .
+
+```
+
+Or:
+
+```bash
+cmake -S . -B build
+cmake --build build
+
+```
+
+
+
 ## Roadmap
 - [x] Generate full 2D grid
 - [x] Convert squares into cubes
