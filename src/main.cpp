@@ -9,9 +9,11 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <algorithm>
-//#include "opencv2/core.hpp"
 #include <stack>
+#include <opencv2/opencv.hpp>
+
 using namespace std;
+using namespace cv;
 
 struct CameraMovement
 {
@@ -23,10 +25,19 @@ struct CameraMovement
 
 struct Function 
 {
-    float x;
-    float y;
+    float yMin;
+    float yMax;
     std::string expresion;
     std::vector<std::string>ShuntingYardExpr;
+};
+
+struct Image
+{
+    Mat image;
+    float height;
+    float width;
+    std::string path;
+    std::vector<float> grid;
 };
 
 std::string loadShaderSource(const char* filepath)
@@ -49,12 +60,12 @@ float normalize(int MAX_Z, int MIN_Z, float value)
     return 0.0f;
 }
 
-void EnterFunction(Function& function)
+void loadFunction(Function& function)
 {
 
     std::cout << "Enter your function (x,y)\n";
 
-     // Clear leftover newline in the input buffer
+    // Clear leftover newline in the input buffer
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
     // Use getline to read the whole line including spaces
@@ -67,6 +78,84 @@ void EnterFunction(Function& function)
     );
 
     std::cout << "You wrote : " << function.expresion  << "\n";
+
+    function.yMax = 0.0f;
+    function.yMin = 0.0f;
+}
+
+void loadImage(Image& image)
+{
+    std::cout << "Enter the path of your image \n";
+
+        // Clear leftover newline in the input buffer
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+    // Use getline to read the whole line including spaces
+    std::getline(std::cin, image.path);
+
+    std::cout << "You wrote : " << image.path << "\n";
+}
+
+std::vector<float> GrayScaleGridConverter(Image& image, const int HEIGHT, const int WIDTH)
+{
+    image.image = imread(image.path, IMREAD_GRAYSCALE);
+
+    // Error Handling
+    while (image.image.empty()) {
+        cout << "Image File " << "Not Found" << endl;
+        loadImage(image);
+        image.image = imread(image.path, IMREAD_GRAYSCALE);
+        //return -1;
+    }
+
+    Mat img = image.image;
+
+    int W = img.size().width;
+    int H = img.size().height;
+
+
+
+    // compute width of tile
+    float w = W/WIDTH;
+
+    // compute number of rows
+    const int rows = int(H/w);
+
+    // Define our grid
+    std::vector<float> VolumGrid;
+
+    int counter = 0; // counter for the vector
+
+    for (int i=0; i<rows; i++)
+    {
+        int y1 = (i*w);
+        int y2 = (i+1)*w;
+        
+        if ( i == rows-1) y2 = H;
+
+        for (int j=0; j < WIDTH; j++)
+        {
+            int x1 = j*w;
+            int x2 = (j+1)*w;
+
+            if (j == WIDTH - 1)  x2 = W;
+
+            Mat tempImg = img( Range(y1, y2), Range(x1, x2) );
+
+
+            if (tempImg.empty() || tempImg.rows == 0 || tempImg.cols == 0) {
+                std::cout << "tempImg is empty! Check your ranges." << std::endl;
+            } else {
+                cv::Scalar tempVal = cv::mean(tempImg);
+                VolumGrid.push_back( (tempVal.val[0] /255)*10);
+                counter++;
+            }
+        }
+    }
+
+
+
+    return VolumGrid;
 }
 
 int getPrecedence(char op) {
@@ -220,7 +309,12 @@ float RPNCalculator(Function& function, float x, float y)
         }
     }
 
-    return (float) s.top();
+    float result = s.top();
+
+    if (result > function.yMax) function.yMax = result;
+    if (result < function.yMin) function.yMin = result;
+
+    return result;
 }
 
 void processInput(GLFWwindow* window, CameraMovement& camera)
@@ -315,56 +409,56 @@ std::vector<float> createCube()
 
     return {
         // back face
-        -size, -size, -size,
-         size, -size, -size,
-         size,  size, -size,
-         size,  size, -size,
-        -size,  size, -size,
-        -size, -size, -size,
+        -size, -size, -size, 1.0f, 0.0f, 0.0f,
+         size, -size, -size, 0.0f, 1.0f, 0.0f,
+         size,  size, -size, 0.0f, 0.0f, 1.0f,
+         size,  size, -size, 1.0f, 0.0f, 0.0f,
+        -size,  size, -size, 0.0f, 1.0f, 0.0f,
+        -size, -size, -size, 0.0f, 0.0f, 1.0f,
 
         // front face
-        -size, -size,  size,
-         size, -size,  size,
-         size,  size,  size,
-         size,  size,  size,
-        -size,  size,  size,
-        -size, -size,  size,
+        -size, -size,  size, 1.0f, 0.0f, 0.0f,
+         size, -size,  size, 0.0f, 1.0f, 0.0f,
+         size,  size,  size, 0.0f, 0.0f, 1.0f,
+         size,  size,  size, 1.0f, 0.0f, 0.0f,
+        -size,  size,  size, 0.0f, 1.0f, 0.0f,
+        -size, -size,  size, 0.0f, 0.0f, 1.0f,
 
         // left face
-        -size,  size,  size,
-        -size,  size, -size,
-        -size, -size, -size,
-        -size, -size, -size,
-        -size, -size,  size,
-        -size,  size,  size,
+        -size,  size,  size, 1.0f, 0.0f, 0.0f,
+        -size,  size, -size, 0.0f, 1.0f, 0.0f,
+        -size, -size, -size, 0.0f, 0.0f, 1.0f,
+        -size, -size, -size, 1.0f, 0.0f, 0.0f,
+        -size, -size,  size, 0.0f, 1.0f, 0.0f,
+        -size,  size,  size, 0.0f, 0.0f, 1.0f,
 
         // right face
-         size,  size,  size,
-         size,  size, -size,
-         size, -size, -size,
-         size, -size, -size,
-         size, -size,  size,
-         size,  size,  size,
+         size,  size,  size, 1.0f, 0.0f, 0.0f,
+         size,  size, -size, 0.0f, 1.0f, 0.0f,
+         size, -size, -size, 0.0f, 0.0f, 1.0f,
+         size, -size, -size, 1.0f, 0.0f, 0.0f,
+         size, -size,  size, 0.0f, 1.0f, 0.0f,
+         size,  size,  size, 0.0f, 0.0f, 1.0f,
 
         // bottom face
-        -size, -size, -size,
-         size, -size, -size,
-         size, -size,  size,
-         size, -size,  size,
-        -size, -size,  size,
-        -size, -size, -size,
+        -size, -size, -size, 1.0f, 0.0f, 0.0f,
+         size, -size, -size, 0.0f, 1.0f, 0.0f,
+         size, -size,  size, 0.0f, 0.0f, 1.0f,
+         size, -size,  size, 1.0f, 0.0f, 0.0f,
+        -size, -size,  size, 0.0f, 1.0f, 0.0f,
+        -size, -size, -size, 0.0f, 0.0f, 1.0f,
 
         // top face
-        -size,  size, -size,
-         size,  size, -size,
-         size,  size,  size,
-         size,  size,  size,
-        -size,  size,  size,
-        -size,  size, -size
+        -size,  size, -size, 1.0f, 0.0f, 0.0f,
+         size,  size, -size, 0.0f, 1.0f, 0.0f,
+         size,  size,  size, 0.0f, 0.0f, 1.0f,
+         size,  size,  size, 1.0f, 0.0f, 0.0f,
+        -size,  size,  size, 0.0f, 1.0f, 0.0f,
+        -size,  size, -size, 0.0f, 0.0f, 1.0f
     };
 }
 
-void renderCube( glm::mat4 model, glm::mat4 projection, unsigned int shaderProgram, float xPos, float yPos, float zPos)
+void renderCube( glm::mat4& model, glm::mat4 projection, unsigned int shaderProgram, float xPos, float yPos, float zPos)
 {
     model = glm::translate(
             glm::mat4(1.0f),
@@ -376,17 +470,6 @@ void renderCube( glm::mat4 model, glm::mat4 projection, unsigned int shaderProgr
             1, GL_FALSE,
             glm::value_ptr(model)
         );
-
-    projection = glm::perspective(
-            glm::radians(45.0f),
-            1600.0f / 900.0f,
-            0.1f,
-            100.0f
-        );
-
-
-    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"),
-            1, GL_FALSE, glm::value_ptr(projection));
 
     glDrawArrays(GL_TRIANGLES, 0, 36);
 }
@@ -407,8 +490,10 @@ void creatSquare(unsigned int shaderProgram, unsigned int VAO, unsigned int VBO,
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(square_vertice), square_vertice, GL_DYNAMIC_DRAW);
     // 3. Initialiser les pointeurs d’attributs de sommets
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+
+    
 
     glUseProgram(shaderProgram);
     glDrawArrays(GL_TRIANGLES, 0, 6);    
@@ -423,7 +508,6 @@ void creatGrid(unsigned int shaderProgram, unsigned int VAO, unsigned int VBO)
     }
 }
 
-
 int main()
 {
 
@@ -434,7 +518,26 @@ int main()
     bool finished = false;
 
     Function UserFunction;
-    
+    Image UserImage;
+
+    // Test 
+
+    // imread("default.jpg");
+    //Mat image = imread("from-pixels-to-blocks/src/portrait.jpg", IMREAD_GRAYSCALE);
+
+    // Error Handling
+    //if (image.empty()) {
+    //    cout << "Image File " << "Not Found" << endl;
+    //    cin.get();
+    //    return -1;
+    //}
+
+    // Show Image inside a window with
+    // the name provided
+    //imshow("Window Name", image);
+
+    // Wait for any keystroke
+    //waitKey(0);
 
 
 
@@ -495,11 +598,15 @@ int main()
     if (MODE == 1)
     {
         std::cout << "MODE : Function\n"; 
-        EnterFunction(UserFunction);
+        loadFunction(UserFunction);
         ShuntingYard(UserFunction);
         //std::cout << RPNCalculator(UserFunction, 1.0f, 1.0f);
     }
-    if (MODE == 2){std::cout <<"MODE : Image\n" << "This is not implemented yet...\n";}
+    if (MODE == 2){
+        std::cout <<"MODE : Image\n"; 
+        loadImage(UserImage);
+        UserImage.grid = GrayScaleGridConverter(UserImage, HEIGHT, WIDTH);
+    }
     if (MODE == 3){std::cout <<"MODE : Video\n" << "This is not implemented yet...\n";}
 
 
@@ -636,8 +743,11 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
     // 3. Initialiser les pointeurs d’attributs de sommets
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+    // 4. Initialiser les pointeurs d’attributs de barycentrics.
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
 
 
 
@@ -648,6 +758,14 @@ int main()
 
     float angle = 0.0f;
     float wave = 0.0f;
+    //init model 
+    model = glm::translate(
+            glm::mat4(1.0f),
+            glm::vec3(0.0f, 0.0f, 0.0f)
+    );
+
+    glm::vec4 MinMax = glm::vec4(-HEIGHT, HEIGHT, 0.0f, 0.0f);
+
     while (!glfwWindowShouldClose(window))
     {
         glClearColor(0.2f, 0.3f, 0.8f, 1.0f);
@@ -656,6 +774,12 @@ int main()
         glUseProgram(shaderProgram);
         glBindVertexArray(VAO);
 
+        // Give the minmax for color normalisation
+
+
+
+
+
         // Call the keyboard interpreter
         processInput(window, camera);
 
@@ -663,21 +787,6 @@ int main()
 
         // Set view lookat
         view = glm::lookAt(camera.cameraPos, camera.cameraPos + camera.cameraFront, camera.cameraUp);
-
-        model = glm::translate(
-            glm::mat4(1.0f),
-            glm::vec3(0.0f, 0.0f, 0.0f)
-        );
-
-        glUniformMatrix4fv(
-            glGetUniformLocation(shaderProgram, "model"),
-            1, GL_FALSE,
-            glm::value_ptr(model)
-        );
-        //view = glm::translate(
-        //glm::mat4(1.0f),
-        //glm::vec3(0.0f, 1.0f, -30.0f)   // move camera backward
-        //);
 
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"),
             1, GL_FALSE, glm::value_ptr(view));
@@ -694,19 +803,36 @@ int main()
 
         if ((int) MODE == 1)
         {
-            for (float i = -((float) (WIDTH*1.5)/2); i<=((float) (WIDTH*1.5)/2); i+=1.5f){
-                for (float j = -((float) (HEIGHT*1.5)/2); j<=((float) (HEIGHT*1.5)/2); j+=1.5f){
+            glm::vec4 MinMax = glm::vec4(UserFunction.yMin, UserFunction.yMax, 0.0f, 0.0f);
+            glUniform4fv(glGetUniformLocation(shaderProgram, "MinMax"), 1, glm::value_ptr(MinMax));
+            for (float i = -((float) (WIDTH*1.5)/2); i<((float) (WIDTH*1.5)/2); i+=1.5f){
+                for (float j = -((float) (HEIGHT*1.5)/2); j<((float) (HEIGHT*1.5)/2); j+=1.5f){
                     renderCube(model, projection, shaderProgram, i, RPNCalculator(UserFunction, i, j) , j);
                 }
             }
-        } else {
-            for (float i = -((float) (WIDTH*1.5)/2); i<=((float) (WIDTH*1.5)/2); i+=1.5f){
-                for (float j = -((float) (HEIGHT*1.5)/2); j<=((float) (HEIGHT*1.5)/2); j+=1.5f){
-                    renderCube(model, projection, shaderProgram, i, i*j , j);
+        } else if (MODE == 2) {
+            int counter = 0;
+            for (float i = -((float) (WIDTH*1.5)/2); i<((float) (WIDTH*1.5)/2); i+=1.5f){
+                for (float j = -((float) (HEIGHT*1.5)/2); j<((float) (HEIGHT*1.5)/2); j+=1.5f){
+                    renderCube(model, projection, shaderProgram, i, UserImage.grid[counter] , j);
+                    counter++;
                 }
             }
+        } else if (MODE == 3){
+            creatSquare(shaderProgram, VAO, VBO, 0,0);
         }
-        
+
+        projection = glm::perspective(
+            glm::radians(45.0f),
+            1600.0f / 900.0f,
+            0.1f,
+            100.0f
+        );
+
+
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"),
+                1, GL_FALSE, glm::value_ptr(projection));
+
 
         glfwSwapBuffers(window);
         glfwPollEvents();
