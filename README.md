@@ -46,7 +46,6 @@ cd from-pixels-to-blocks
 
 ### 🔹 If Using CMake (Recommended)
 
-
 ## Build
 
 ```bash
@@ -66,6 +65,28 @@ cmake --build build
 ```
 
 
+
+## Use
+
+## Function Graph Mode
+
+- Select the dimension of the output grid
+- Type your function ( in function of x and y)
+
+## Picture Mode
+
+- Select the dimension of the output grid
+- Type the path of your image (e.g ``from-pixels-to-blocks/images/la_joconde.jpg``)
+
+### Rotation
+- ⬅️ / ➡️ : Rotate left / right
+- ⬆️ / ⬇️ : Rotate up / down
+
+### Movement
+- Z : Move forward
+- S : Move backward
+- Q : Move left
+- D : Move right
 
 ## Roadmap
 - [x] Generate full 2D grid
