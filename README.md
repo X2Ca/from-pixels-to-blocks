@@ -1,7 +1,9 @@
 # From Pixels to Blocks
 ### A Color-Based 3D Transformation System
-
 Created by: Cocoboyy
+
+![Demo](images/demo.gif)
+
 
 ## Overview
 This project explores the transformation of 2D image data into volumetric 3D block-based models.

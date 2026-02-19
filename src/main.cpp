@@ -342,7 +342,6 @@ float RPNCalculator(Function& function, float x, float y)
 void processInput(GLFWwindow* window, CameraMovement& camera)
 {
     const float cameraSpeed = 0.5f;
-    const float cameraTrajectoryRadius = 30.0f;
     const float incrementAngle = 1.0f * cameraSpeed;
 
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS){
