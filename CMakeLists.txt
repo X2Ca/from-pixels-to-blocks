@@ -12,6 +12,7 @@ find_package(OpenCV REQUIRED)
 add_executable(from-pixels-to-blocks
     src/main.cpp
     src/Function.cpp
+    src/ImageProcessing.cpp
 )
 
 target_link_libraries(from-pixels-to-blocks
