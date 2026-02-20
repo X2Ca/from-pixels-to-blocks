@@ -31,8 +31,7 @@ The result is a stylized yet data-driven volumetric interpretation that bridges 
 - C++17 compatible compiler (GCC 9+, Clang 10+, MSVC 2019+)
 - CMake 3.15+
 - OpenCV 4.12.0+
-- GLSL 
-- GLFW / GLAD 3.4#1
+- OpenGL 3.3+ compatible GPU
 
 ## Clone the Repository
 
@@ -83,10 +82,10 @@ cmake --build build
 - ⬆️ / ⬇️ : Rotate up / down
 
 ### Movement
-- Z : Move forward
-- S : Move backward
-- Q : Move left
-- D : Move right
+- ``Z`` : Move forward
+- ``S`` : Move backward
+- ``Q`` : Move left
+- ``D`` : Move right
 
 ## Roadmap
 - [x] Generate full 2D grid

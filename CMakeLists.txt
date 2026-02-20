@@ -8,8 +8,10 @@ find_package(glfw3 CONFIG REQUIRED)
 find_package(glad CONFIG REQUIRED)
 find_package(OpenCV REQUIRED)
 
+
 add_executable(from-pixels-to-blocks
     src/main.cpp
+    src/Function.cpp
 )
 
 target_link_libraries(from-pixels-to-blocks
@@ -19,6 +21,8 @@ target_link_libraries(from-pixels-to-blocks
     ${OpenCV_LIBS}
 )
 file(GLOB SHADERS "shaders/*.glsl")
+
+target_include_directories(from-pixels-to-blocks PRIVATE include)
 
 foreach(shader ${SHADERS})
     configure_file(${shader} ${CMAKE_BINARY_DIR}/shaders COPYONLY)

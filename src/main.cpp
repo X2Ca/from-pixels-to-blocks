@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <stack>
 #include <opencv2/opencv.hpp>
+#include "../include/Function.hpp"
 
 using namespace std;
 using namespace cv;
@@ -21,13 +22,6 @@ struct CameraMovement
     glm::vec3 cameraPos ;
     glm::vec3 cameraFront ;
     glm::vec3 cameraUp ;
-};
-struct Function 
-{
-    float yMin;
-    float yMax;
-    std::string expresion;
-    std::vector<std::string>ShuntingYardExpr;
 };
 struct Image
 {
@@ -58,7 +52,7 @@ float normalize(int MAX_Z, int MIN_Z, float value)
     return 0.0f;
 }
 
-void loadFunction(Function& function)
+void loadFunction(FunctionData& function)
 {
 
     std::cout << "Enter your function (x,y)\n";
@@ -67,15 +61,15 @@ void loadFunction(Function& function)
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
     // Use getline to read the whole line including spaces
-    std::getline(std::cin, function.expresion);
+    std::getline(std::cin, function.expression);
 
     // Remove all spaces
-    function.expresion.erase(
-        std::remove(function.expresion.begin(), function.expresion.end(), ' '),
-        function.expresion.end()
+    function.expression.erase(
+        std::remove(function.expression.begin(), function.expression.end(), ' '),
+        function.expression.end()
     );
 
-    std::cout << "You wrote : " << function.expresion  << "\n";
+    std::cout << "You wrote : " << function.expression  << "\n";
 
     function.yMax = 0.0f;
     function.yMin = 0.0f;
@@ -178,165 +172,6 @@ int SobelEdgeDetection(Image& image){
 
     cv::waitKey(0);
     return 1;
-}
-
-int getPrecedence(char op) {
-    switch(op) {
-        case '+': return 2;
-        case '-': return 2;
-        case '*': return 3;
-        case '/': return 3;
-        case '^': return 4;
-        default: return 0;
-    }
-}
-
-bool getLeftAssociativity(char op) {
-    switch(op){
-        case '+': return true;
-        case '-': return true;
-        case '*': return true;
-        case '/': return true;
-        case '^': return false;
-        default: return false;
-    }
-}
-
-bool isOperator(char c) {
-    return c == '+' || c == '-' || c == '*' || 
-           c == '/' || c == '%' || c == '^';
-}
-
-void ShuntingYard(Function& function)
-{
-
-    //TODO: handle function and parenthesis 
-
-    std::stack<std::string> output;
-    std::stack<std::string> operators;
-    std::stack<std::string> tempOut;
-
-    std::string temp;
-    float tempResult = 0.0f;
-    std::string expr = function.expresion;
-
-
-
-    for (int i=0; i <= expr.size(); i++){
-        //init var used to detect function ( like sin )
-        int j=0;
-        bool function = false;
-        //using a temp var for common processing 
-        temp = expr[i];
-
-
-        if (std::isdigit(temp[0]) || temp[0] == 'x' || temp[0] == 'y'){
-            output.push(temp);
-            //std::cout << "digit\n";
-        } else if (std::isalpha(temp[0]) != 0){
-            while (!function){
-                j++;
-                if (std::isalpha(expr[j+i]) != 0) continue;
-                else function = true; operators.push(expr.substr(i, j)); i += j;
-            }
-        } else if (isOperator(temp[0])) {
-            if (operators.empty()) operators.push(temp);
-            else { 
-                while(!operators.empty() && operators.top()[0] != '(' && (getPrecedence(operators.top()[0]) > getPrecedence(temp[0]) || (getPrecedence(temp[0]) == getPrecedence(operators.top()[0]) && getLeftAssociativity(temp[0])))){
-                    output.push(operators.top()) ; operators.pop(); 
-                }
-            operators.push(temp);
-            }
-        } else if ((temp[0] == '(')){
-            operators.push(temp);
-        } else if (temp[0] == ')'){
-                while( !operators.empty() && operators.top()[0] != '('){
-                    output.push(operators.top()) ; operators.pop();
-                }
-                if (!operators.empty()) operators.pop(); // Pop the left parenthesis
-        }
-
-    }
-
-    while (!operators.empty()) {
-        output.push(operators.top());
-        operators.pop();
-    }
-
-    std::stack<std::string> tempV(output);  // make a copy
-    std::vector<std::string> v;
-
-    while (!tempV.empty()) {
-        v.push_back(tempV.top());
-        tempV.pop();
-    }
-
-    std::reverse(v.begin(), v.end());
-    function.ShuntingYardExpr = v;
-
-    std::cout << "RPN Expresion :";
-    for (std::string c : function.ShuntingYardExpr) std::cout << c << " ";
-    std::cout << '\n';
-}
-
-double applyFunctionRPN(const std::string& func, std::stack<double>& s) {
-    if (func == "sqrt") {
-        double a = s.top(); s.pop();
-        return std::sqrt(a);
-    }
-    else if (func == "sin") {
-        double a = s.top(); s.pop();
-        return std::sin(a);
-    }
-    else if (func == "cos") {
-        double a = s.top(); s.pop();
-        return std::cos(a);
-    }
-    else if (func == "exp"){
-        double a = s.top(); s.pop();
-        return std::exp(a);
-    }
-
-    throw std::runtime_error("Unknown function");
-}
-
-float RPNCalculator(Function& function, float x, float y)
-{
-
-    std::stack<double> s;
-    std::vector<std::string> tokens = function.ShuntingYardExpr;
-
-
-    for (const std::string& token : tokens) {
-        if (std::isdigit(token[0])) {  // simple check for number
-            s.push(std::stod(token));
-        }
-        else if (token == "x") s.push(x);
-        else if (token == "y") s.push(y);
-        else if (isOperator(token[0]))  {  // operator
-            if (s.size() < 2) {
-                //std::cerr << "Invalid expression: not enough operands\n";
-                continue;
-            }
-            double b = s.top(); s.pop();
-            double a = s.top(); s.pop();
-            if (token == "+"){ s.push(a+b);}
-            else if (token == "-"){ s.push(a-b);}
-            else if (token == "*"){ s.push(a*b);}
-            else if (token == "/"){ s.push(a/b);}
-            else if (token == "^"){ s.push(pow(a,b));}
-        }
-        else {
-            s.push(applyFunctionRPN(token, s));
-        }
-    }
-
-    float result = s.top();
-
-    if (result > function.yMax) function.yMax = result;
-    if (result < function.yMin) function.yMin = result;
-
-    return result;
 }
 
 void processInput(GLFWwindow* window, CameraMovement& camera)
@@ -566,7 +401,8 @@ int main()
     int MODE;
     bool finished = false;
 
-    Function UserFunction;
+    FunctionData UserFunction;
+    Function func; //unction class object
     Image UserImage;
 
     // Test 
@@ -648,7 +484,7 @@ int main()
     {
         std::cout << "MODE : Function\n"; 
         loadFunction(UserFunction);
-        ShuntingYard(UserFunction);
+        func.ShuntingYard(UserFunction);
         //std::cout << RPNCalculator(UserFunction, 1.0f, 1.0f);
     }
     if (MODE == 2){
@@ -857,7 +693,7 @@ int main()
             glUniform4fv(glGetUniformLocation(shaderProgram, "MinMax"), 1, glm::value_ptr(MinMax));
             for (float i = -((float) (WIDTH*1.5)/2); i<((float) (WIDTH*1.5)/2); i+=1.5f){
                 for (float j = -((float) (HEIGHT*1.5)/2); j<((float) (HEIGHT*1.5)/2); j+=1.5f){
-                    renderCube(model, projection, shaderProgram, i, RPNCalculator(UserFunction, i, j) , j);
+                    renderCube(model, projection, shaderProgram, i, func.RPNCalculator(UserFunction, i, j) , j);
                 }
             }
         } else if (MODE == 2) {
