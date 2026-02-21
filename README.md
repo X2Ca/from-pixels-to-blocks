@@ -1,5 +1,10 @@
 # From Pixels to Blocks
 ### A Color-Based 3D Transformation System
+
+![C++](https://img.shields.io/badge/C%2B%2B-17-blue)
+![OpenGL](https://img.shields.io/badge/OpenGL-3.3-green)
+![License](https://img.shields.io/badge/License-MIT-yellow)
+
 Created by: Cocoboyy
 
 ![Demo](images/demo.gif)
@@ -9,8 +14,7 @@ Created by: Cocoboyy
 This project explores the transformation of 2D image data into volumetric 3D block-based models.
 
 Using color as the primary guiding parameter, combined with structural and spatial analysis—the system reconstructs images into layered modular 3D forms.
-
-The result is a stylized yet data-driven volumetric interpretation that bridges digital imagery and three-dimensional abstraction.
+The system converts image pixels into 3D cubes, where color intensity and structure determine the height and arrangement of blocks.
 
 ## Features
 - 2D image parsing
@@ -19,6 +23,13 @@ The result is a stylized yet data-driven volumetric interpretation that bridges 
 - Grid-based square generation
 - Volumetric cube transformation
 - Modular 3D structure reconstruction
+
+## How It Works
+
+- Each pixel is mapped to a square in a 2D grid.
+- Color intensity determines cube height.
+- The grid is extruded into 3D space.
+- Lighting and shading enhance depth perception using viridis color scale.
 
 ## Technologies Used
 - C++
@@ -69,12 +80,12 @@ cmake --build build
 
 ## Function Graph Mode
 
-- Select the dimension of the output grid
-- Type your function ( in function of x and y)
+- Select the grid resolution
+- Enter a function of x and y
 
 ## Picture Mode
 
-- Select the dimension of the output grid
+- Select the grid resolution
 - Type the path of your image (e.g ``from-pixels-to-blocks/images/la_joconde.jpg``)
 
 ### Rotation
@@ -93,6 +104,10 @@ cmake --build build
 - [x] Add lighting & shading
 - [ ] Export 3D model
 - [ ] Optimize performance
+
+## Screenshots
+![Demo](images/demo.gif)
+![Function](images/sinus_example.png)
 
 
 ## License
