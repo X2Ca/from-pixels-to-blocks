@@ -265,40 +265,6 @@ void renderCube( glm::mat4& model, glm::mat4 projection, unsigned int shaderProg
     glDrawArrays(GL_TRIANGLES, 0, 36);
 }
 
-void creatSquare(unsigned int shaderProgram, unsigned int VAO, unsigned int VBO,  float xPos,  float yPos)
-{
-    float size = 0.15f;
-    float square_vertice[] = {
-    (-size + size*xPos), (size + size*yPos), 0.0f, //Face 1 begin
-    (size + size*xPos), (size + size*yPos), 0.0f,
-    (size + size*xPos),  (2*size + size*yPos), 0.0f,
-    (-size + size*xPos), (size + size*yPos), 0.0f,
-    (-size + size*xPos), (2*size + size*yPos), 0.0f,
-    (size + size*xPos),  (2*size + size*yPos), 0.0f //Face 1 end
-
-    };
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(square_vertice), square_vertice, GL_DYNAMIC_DRAW);
-    // 3. Initialiser les pointeurs d’attributs de sommets
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    
-
-    glUseProgram(shaderProgram);
-    glDrawArrays(GL_TRIANGLES, 0, 6);    
-}
-
-void creatGrid(unsigned int shaderProgram, unsigned int VAO, unsigned int VBO)
-{
-    for (int i = -10; i<10; i++){
-        for (int j = -10; j<10; j++){
-            creatSquare(shaderProgram, VAO, VBO, i, j);
-        }
-    }
-}
-
 int main()
 {
 
@@ -313,27 +279,6 @@ int main()
     ImageData UserImage;
 
     ImageProcessing iprocess;
-
-    // Test 
-
-    // imread("default.jpg");
-    //Mat image = imread("from-pixels-to-blocks/src/portrait.jpg", IMREAD_GRAYSCALE);
-
-    // Error Handling
-    //if (image.empty()) {
-    //    cout << "Image File " << "Not Found" << endl;
-    //    cin.get();
-    //    return -1;
-    //}
-
-    // Show Image inside a window with
-    // the name provided
-    //imshow("Window Name", image);
-
-    // Wait for any keystroke
-    //waitKey(0);
-
-
 
     while (!finished)
     {
@@ -400,7 +345,12 @@ int main()
         std::cout <<"MODE : Image\n"; 
         loadImage(UserImage);
         UserImage.grid = iprocess.GrayScaleGridConverter(UserImage, HEIGHT, WIDTH);
-        //SobelEdgeDetection(UserImage);
+        //int a = iprocess.SobelEdgeDetection(UserImage);
+        //iprocess.CannyEdgeDetection(UserImage);
+        //iprocess.HoughLineTransform(UserImage);
+        //iprocess.ParallelogramFinder(iprocess.ParallelLineDetector(UserImage));
+        //iprocess.Intersection(UserImage);
+        //iprocess.creatDepthScale(UserImage);
     }
     if (MODE == 3){std::cout <<"MODE : Video\n" << "This is not implemented yet...\n";}
 
@@ -610,14 +560,14 @@ int main()
             //Compute minma
             glm::vec4 MinMax = glm::vec4(*std::min_element(UserImage.grid.begin(), UserImage.grid.end()), *std::max_element(UserImage.grid.begin(), UserImage.grid.end()), 0.0f, 0.0f);
             glUniform4fv(glGetUniformLocation(shaderProgram, "MinMax"), 1, glm::value_ptr(MinMax));
-            for (float i = -((float) (WIDTH*1.5)/2); i<((float) (WIDTH*1.5)/2); i+=1.5f){
-                for (float j = -((float) (HEIGHT*1.5)/2); j<((float) (HEIGHT*1.5)/2); j+=1.5f){
+            for (float i = -((float) (UserImage.rows*1.5)/2); i<((float) (UserImage.rows*1.5)/2); i+=1.5f){
+                for (float j = -((float) (UserImage.columns*1.5)/2); j<((float) (UserImage.columns*1.5)/2); j+=1.5f){
                     renderCube(model, projection, shaderProgram, i, UserImage.grid[counter] , j);
                     counter++;
                 }
             }
         } else if (MODE == 3){
-            creatSquare(shaderProgram, VAO, VBO, 0,0);
+            ;
         }
 
         projection = glm::perspective(
