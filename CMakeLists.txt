@@ -1,3 +1,4 @@
+
 cmake_minimum_required(VERSION 3.20)
 project(OpenGLTest)
 
@@ -13,6 +14,7 @@ add_executable(from-pixels-to-blocks
     src/main.cpp
     src/Function.cpp
     src/ImageProcessing.cpp
+    src/3DObjectCreator.cpp
 )
 
 target_link_libraries(from-pixels-to-blocks

@@ -1,0 +1,10 @@
+^C:\USERS\ORDI2430538\DOCUMENTS\CODING_PROJECT_FLAVORTOWN\SIMULATION_IMAGE_VOLUMIC\FROM-PIXELS-TO-BLOCKS\BUILD\CMAKEFILES\A7E97C6D618533AC221880CA99913C23\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/ordi2430538/Documents/coding_project_flavortown/simulation_image_volumic/from-pixels-to-blocks -BC:/Users/ordi2430538/Documents/coding_project_flavortown/simulation_image_volumic/from-pixels-to-blocks/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Users/ordi2430538/Documents/coding_project_flavortown/simulation_image_volumic/from-pixels-to-blocks/build/OpenGLTest.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

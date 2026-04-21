@@ -27,12 +27,14 @@ std::vector<float> ImageProcessing::GrayScaleGridConverter(ImageData& image, con
 
 
     // compute width of tile
-    float w = W/WIDTH;
+    float w = (float)W / (float)WIDTH;
 
     // compute number of rows
-    const int rows = int(H/w);
-
-    image.rows = rows;
+    const int rows = int(H / w);
+    if (rows > HEIGHT) {
+        std::cerr << "[Error] rows (" << rows << ") exceeds HEIGHT (" << HEIGHT << "), clamping\n";
+    }
+    image.rows = std::min(rows, HEIGHT);
     image.columns = WIDTH;
 
     if (rows > HEIGHT ) std::cerr << "[Error] The number of rows doesn't  match";
@@ -42,25 +44,33 @@ std::vector<float> ImageProcessing::GrayScaleGridConverter(ImageData& image, con
 
     int counter = 0; // counter for the vector
 
-    for (int i=0; i<rows; i++)
+    for (int i = 0; i < rows; i++)
     {
-        int y1 = (i*w);
-        int y2 = (i+1)*w;
-        
-        if ( i == rows-1) y2 = H;
+        int y1 = (int)(i * w);
+        int y2 = (int)((i + 1) * w);
+        if (y2 > H) y2 = H;
+        if (y1 >= y2) y2 = y1 + 1; // guarantee non-zero height
 
-        for (int j=0; j < WIDTH; j++)
+        for (int j = 0; j < WIDTH; j++)
         {
-            int x1 = j*w;
-            int x2 = (j+1)*w;
+            int x1 = (int)(j * w);
+            int x2 = (int)((j + 1) * w);
+            if (x2 > W) x2 = W;
+            if (x1 >= x2) x2 = x1 + 1; // guarantee non-zero width
 
-            if (j == WIDTH - 1)  x2 = W;
+            // clamp to image bounds
+            x1 = std::min(x1, W - 1);
+            x2 = std::min(x2, W);
+            y1 = std::min(y1, H - 1);
+            y2 = std::min(y2, H);
 
-            Mat tempImg = img( Range(y1, y2), Range(x1, x2) );
+            Mat tempImg = img(Range(y1, y2), Range(x1, x2));
 
 
             if (tempImg.empty() || tempImg.rows == 0 || tempImg.cols == 0) {
-                std::cout << "tempImg is empty! Check your ranges." << std::endl;
+                std::cerr << "Empty tile at i=" << i << " j=" << j << ", pushing 0\n";
+                VolumGrid.push_back(0.0f); // maintain size contract
+                counter++;
             } else {
                 cv::Scalar tempVal = cv::mean(tempImg);
                 VolumGrid.push_back( (tempVal.val[0] /255)*10);
