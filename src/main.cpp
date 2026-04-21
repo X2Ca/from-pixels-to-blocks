@@ -141,6 +141,10 @@ TIPS: IF YOU DON'T SEE YOUR FUNCTION, USE YOUR KEYBOARD ARROWS & ZQSD CONTROLS
     function.yMin = 0.0f;
 }
 
+void framebuffer_size_callback(GLFWwindow* window, int width, int height){
+        glViewport(0, 0, width, height);
+}
+
 void loadImage(ImageData& image)
 {
     std::cout << "Enter the path of your image \n";
@@ -407,7 +411,7 @@ int main()
             continue;
         }
 
-        std::cout << "Cube size (0.5 recommended) :\n";
+        std::cout << "Cube size (in milimeter 5 recommended) :\n";
         std::cin >> settings.cubeSize;
 
         if (settings.cubeSize <=0){
@@ -415,7 +419,7 @@ int main()
             continue;
         }
 
-        std::cout << "Spacing between cube (0.5 recommended) :\n";
+        std::cout << "Spacing between cube (in milimeter 2 recommended) :\n";
         std::cin >> settings.spacingCube;
         if (settings.spacingCube <0){
             std::cout << "Please enter a positive number...\n";
@@ -426,8 +430,11 @@ int main()
 
     finished = true ;
     }
+    float temp1 = settings.cubeSize;
+    float temp2 = settings.spacingCube;
 
-    settings.scaleFactor = (settings.cubeSize + settings.spacingCube)*2;
+    settings.scaleFactor = (temp1 + temp2)*2;
+
 
     std::cout << WIDTH << " * " << HEIGHT << "\n";
 
@@ -495,8 +502,12 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+    
+    GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+    const GLFWvidmode* mode = glfwGetVideoMode(monitor);
 
-    GLFWwindow* window = glfwCreateWindow(1600, 1000, "Volumic vizualisation", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(mode->width, mode->height, "Volumetric Visualization", NULL, NULL);
 
 
     //Init movement var
@@ -669,7 +680,9 @@ int main()
     glm::vec3 min(object.getMin(coords));
     glm::vec3 max(object.getMax(coords));
     object.centredCoordsSys(coords, min, max);
-    object.generateModel(coords, ObjSettings);
+    min = object.getMin(coords);
+    max = object.getMax(coords);
+    object.generateModel(coords, ObjSettings, min, max);
 
 
 
@@ -695,6 +708,8 @@ int main()
             glm::vec3(0.0f, 0.0f, 0.0f)
     );
 
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
 
     float farPlane = std::min((float)HEIGHT * settings.scaleFactor, 1000.0f);
 
@@ -716,9 +731,11 @@ int main()
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"),
             1, GL_FALSE, glm::value_ptr(view));
 
+        int width, height;
+        glfwGetFramebufferSize(window, &width, &height);
         projection = glm::perspective(
             glm::radians(45.0f),
-            1600.0f / 900.0f,
+            (float)width / (float)height,
             0.1f,
             farPlane
         );

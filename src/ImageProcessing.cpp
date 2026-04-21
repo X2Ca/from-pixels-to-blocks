@@ -318,8 +318,4 @@ void ImageProcessing::creatDepthScale(ImageData& image)
     imshow("Depth Scale", depth);
     waitKey();
 
-    
-
-
-
 }

@@ -51,9 +51,9 @@ glm::vec3 ObjectCreator::getMin(std::vector<glm::vec3> vector_lst){
     return glm::vec3(minI, minY, minJ);
 };
 
-void normalize(std::vector<glm::vec3> &vector_lst, float maxY){
+void normalize(std::vector<glm::vec3> &vector_lst, float maxY, glm::vec3 min, glm::vec3 max){
     for (glm::vec3 vect : vector_lst){
-        vect[1] = (vect[1] / maxY) * 100.0f;
+        vect[1] = (vect[1] - min[1]) / (max[1] - min[1]) * maxY;
     }
 };
 
@@ -81,57 +81,59 @@ void ObjectCreator::centredCoordsSys(std::vector<glm::vec3> &vector_lst, glm::ve
 };
 
 void createBase(std::vector<float> &VModel, ObjectGeneratorSettings generationSettings){
+    // Centred around 0;
     float size = generationSettings.surfaceSize;
     float height = 1.0f;
+    float half = size/2;
     std::vector<float> base = {
 
         //front
-        0.0f, 0.0f, 0.0f,
-        size, 0.0f, 0.0f,
-        size, height, 0.0f,
-        0.0f, 0.0f, 0.0f,
-        0.0f, height, 0.0f,
-        size, height, 0.0f,
+        -half, 0.0f, -half,
+        half, 0.0f, -half,
+        half, height, -half,
+        -half, 0.0f, -half,
+        -half, height, -half,
+        half, height, -half,
 
         //back
-        0.0f, 0.0f, -size,
-        size, 0.0f, -size,
-        size, height, -size,
-        0.0f, 0.0f, -size,
-        0.0f, height, -size,
-        size, height, -size,
+        -half, 0.0f, half,
+        half, 0.0f, half,
+        half, height, half,
+        -half, 0.0f, half,
+        -half, height, half,
+        half, height, half,
 
         //left side 
-        0.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, -size,
-        0.0f, height, -size,
-        0.0f, height, -size,
-        0.0f, height, 0.0f,
-        0.0f, 0.0f, 0.0f,
+        -half, 0.0f, -half,
+        -half, 0.0f, half,
+        -half, height, half,
+        -half, height, half,
+        -half, height, -half,
+        -half, 0.0f, -half,
 
         //right side 
-        size, 0.0f, 0.0f,
-        size, 0.0f, -size,
-        size, height, -size,
-        size, height, -size,
-        size, height, 0.0f,
-        size, 0.0f, 0.0f,
+        half, 0.0f, -half,
+        half, 0.0f, half,
+        half, height, half,
+        half, height, half,
+        half, height, -half,
+        half, 0.0f, -half,
 
         //bottom
-        0.0f, 0.0f, 0.0f,
-        size, 0.0f, 0.0f,
-        size, 0.0f, -size,
-        size, 0.0f, -size,
-        0.0f, 0.0f, -size,
-        0.0f, 0.0f, 0.0f,
+        -half, 0.0f, -half,
+        half, 0.0f, -half,
+        half, 0.0f, half,
+        half, 0.0f, half,
+        -half, 0.0f, half,
+        -half, 0.0f, -half,
 
         //top
-        0.0f, height, 0.0f,
-        size, height, 0.0f,
-        size, height, -size,
-        size, height, -size,
-        0.0f, height, -size,
-        0.0f, height, 0.0f,
+        -half, height, -half,
+        half, height, -half,
+        half, height, half,
+        half, height, half,
+        -half, height, half,
+        -half, height, -half,
 
 
 
@@ -230,9 +232,9 @@ void GenerateSTL(const std::vector<float>& VModel){
     MyFile.close();
 }
 
-void ObjectCreator::generateModel(std::vector<glm::vec3> vector_lst, ObjectGeneratorSettings generationSettings){
-    float maxY = 60.0f;
-    normalize(vector_lst, maxY);
+void ObjectCreator::generateModel(std::vector<glm::vec3> vector_lst, ObjectGeneratorSettings generationSettings, glm::vec3 min, glm::vec3 max){
+    float maxY = generationSettings.maxHeight;
+    normalize(vector_lst, maxY, min, max);
     std::vector<float> VModel ;
 
     createBase(VModel, generationSettings);
