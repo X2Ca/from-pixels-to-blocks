@@ -424,6 +424,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="C:\Users\ordi2430538\Documents\coding_project_flavortown\simulation_image_volumic\from-pixels-to-blocks\src\main.cpp" />
     <ClCompile Include="C:\Users\ordi2430538\Documents\coding_project_flavortown\simulation_image_volumic\from-pixels-to-blocks\src\Function.cpp" />
     <ClCompile Include="C:\Users\ordi2430538\Documents\coding_project_flavortown\simulation_image_volumic\from-pixels-to-blocks\src\ImageProcessing.cpp" />
+    <ClCompile Include="C:\Users\ordi2430538\Documents\coding_project_flavortown\simulation_image_volumic\from-pixels-to-blocks\src\3DObjectCreator.cpp" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

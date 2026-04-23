@@ -10,6 +10,9 @@
     <ClCompile Include="C:\Users\ordi2430538\Documents\coding_project_flavortown\simulation_image_volumic\from-pixels-to-blocks\src\ImageProcessing.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="C:\Users\ordi2430538\Documents\coding_project_flavortown\simulation_image_volumic\from-pixels-to-blocks\src\3DObjectCreator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="C:\Users\ordi2430538\Documents\coding_project_flavortown\simulation_image_volumic\from-pixels-to-blocks\CMakeLists.txt" />
