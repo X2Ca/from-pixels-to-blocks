@@ -9,6 +9,7 @@ struct ObjectGeneratorSettings
     float maxHeight; // maximum Height
     float cubeSize; // side size of the cube
     float spacing; // spacing between cubes
+    bool exportModel; // whether to export the model as an .stl file
 };
 
 class ObjectCreator {

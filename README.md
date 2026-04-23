@@ -23,6 +23,7 @@ The system converts image pixels into 3D cubes, where color intensity and struct
 - Grid-based square generation
 - Volumetric cube transformation
 - Modular 3D structure reconstruction
+- STL Model exportation
 
 ## How It Works
 

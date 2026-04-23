@@ -353,12 +353,14 @@ int main()
 
     GeneralSettings settings;
 
+
     FunctionData UserFunction;
     Function func; //unction class object
     ImageData UserImage;
 
     ImageProcessing iprocess;
     ObjectCreator object;
+    ObjectGeneratorSettings ObjSettings;
 
     while (!finished)
     {
@@ -400,6 +402,7 @@ int main()
         std::cin >> WIDTH;
         if( WIDTH <=0 ){
             std::cout << "Please enter a positive number...\n";
+            WIDTH = NULL;
             continue;
         }
 
@@ -408,23 +411,62 @@ int main()
 
         if (HEIGHT <=0){
             std::cout << "Please enter a positive number...\n";
+            HEIGHT = NULL;
             continue;
         }
 
-        std::cout << "Cube size (in milimeter 5 recommended) :\n";
-        std::cin >> settings.cubeSize;
-
-        if (settings.cubeSize <=0){
-            std::cout << "Please enter a positive number...\n";
+        std::cout <<"Do you want to export the 3D model ? (y/n) :\n";
+        char exportChoice;
+        std::cin >> exportChoice;
+        if (exportChoice != 'y' && exportChoice != 'n'){
+            std::cout << "Please enter y or n...\n";
+            exportChoice = 'n';
             continue;
         }
+        if (exportChoice == 'y') {
+            ObjSettings.exportModel = true;
 
-        std::cout << "Spacing between cube (in milimeter 2 recommended) :\n";
-        std::cin >> settings.spacingCube;
-        if (settings.spacingCube <0){
-            std::cout << "Please enter a positive number...\n";
-            continue;
+            std::cout << "Cube size (in milimeter 5 recommended) :\n";
+            std::cin >> settings.cubeSize;
+
+            if (settings.cubeSize <=0){
+                std::cout << "Please enter a positive number...\n";
+                settings.cubeSize = NULL;
+                continue;
+            }
+
+            std::cout << "Spacing between cube (in milimeter 2 recommended) :\n";
+            std::cin >> settings.spacingCube;
+            if (settings.spacingCube <0){
+                std::cout << "Please enter a positive number...\n";
+                continue;
+            }
+
+            std::cout << "Dimensions of the side of the square support plate (in milimeter " << (settings.cubeSize+settings.spacingCube)*max(HEIGHT, WIDTH)+2 << " recommended) :\n";
+            std::cin >> ObjSettings.surfaceSize;
+            if (ObjSettings.surfaceSize <=0){
+                std::cout << "Please enter a positive number...\n";
+                ObjSettings.surfaceSize = NULL;
+                continue;
+            }
+
+            std::cout << "Maximum height of the model (in milimeter 100 recommended) :\n";
+            std::cin >> ObjSettings.maxHeight;
+            if (ObjSettings.maxHeight <=0){
+                std::cout << "Please enter a positive number...\n";
+                ObjSettings.maxHeight = NULL;
+                continue;
+            }
+
+
+        } else {
+            ObjSettings.exportModel = false;
+            settings.cubeSize = 0.5f;
+            settings.spacingCube = 0.5f;
+            ObjSettings.maxHeight = 100.0f;
+            ObjSettings.surfaceSize = 100.0f;
         }
+        
 
 
 
@@ -434,6 +476,14 @@ int main()
     float temp2 = settings.spacingCube;
 
     settings.scaleFactor = (temp1 + temp2)*2;
+
+        // Generate 3D model :
+
+
+
+    ObjSettings.cubeSize = settings.cubeSize;
+    ObjSettings.spacing = settings.spacingCube;
+
 
 
     std::cout << WIDTH << " * " << HEIGHT << "\n";
@@ -666,26 +716,18 @@ int main()
         //std::cout << "Instance count: " << instancePositions.size() << "\n";
     }
 
-    // Generate 3D model :
 
-    ObjectGeneratorSettings ObjSettings;
+    if (ObjSettings.exportModel) {
+        std::vector<glm::vec3> coords;
+        copy(instancePositions.begin(), instancePositions.end(), back_inserter(coords)); 
 
-    ObjSettings.maxHeight = 100.0f;
-    ObjSettings.surfaceSize = 100.0f;
-    ObjSettings.cubeSize = settings.cubeSize;
-    ObjSettings.spacing = settings.spacingCube;
-
-
-    std::vector<glm::vec3> coords;
-    copy(instancePositions.begin(), instancePositions.end(), back_inserter(coords)); 
-
-    glm::vec3 min(object.getMin(coords));
-    glm::vec3 max(object.getMax(coords));
-    object.centredCoordsSys(coords, min, max);
-    min = object.getMin(coords);
-    max = object.getMax(coords);
-    object.generateModel(coords, ObjSettings, min, max);
-
+        glm::vec3 min(object.getMin(coords));
+        glm::vec3 max(object.getMax(coords));
+        object.centredCoordsSys(coords, min, max);
+        min = object.getMin(coords);
+        max = object.getMax(coords);
+        object.generateModel(coords, ObjSettings, min, max);
+    }
 
 
     // Upload to a second VBO

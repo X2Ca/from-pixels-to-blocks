@@ -86,7 +86,7 @@ void ObjectCreator::centredCoordsSys(std::vector<glm::vec3> &vector_lst, glm::ve
 void createBase(std::vector<float> &VModel, ObjectGeneratorSettings generationSettings){
     // Centred around 0;
     float size = generationSettings.surfaceSize;
-    float height = 5.0f;
+    float height = 3.0f;
     float half = size/2;
     std::vector<float> base = {
 
@@ -146,7 +146,7 @@ void createBase(std::vector<float> &VModel, ObjectGeneratorSettings generationSe
 }
 
 void createCube(glm::vec3 coords, std::vector<float> &VModel, ObjectGeneratorSettings generationSettings){
-    //Si on utilise un autre cube size , nous perdons les ecart correctes entre les bloques , nous pouvons alors dire que toutes les auytres mesures sont en mm
+    // nous pouvons alors dire que toutes les auytres mesures sont en mm
     float size = generationSettings.cubeSize;
     float i = coords[0];
     float h = coords[1];
@@ -237,7 +237,10 @@ void GenerateSTL(const std::vector<float>& VModel){
 
 void ObjectCreator::generateModel(std::vector<glm::vec3> vector_lst, ObjectGeneratorSettings generationSettings, glm::vec3 min, glm::vec3 max){
     float maxY = generationSettings.maxHeight;
-    normalize(vector_lst, maxY, min, max);
+    if (max[1]>maxY){
+        normalize(vector_lst, maxY, min, max);
+    }
+
     std::vector<float> VModel ;
 
     createBase(VModel, generationSettings);
