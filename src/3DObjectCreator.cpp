@@ -5,15 +5,15 @@
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
-#include<fstream>
+#include <fstream>
+#include <limits>
 
 std::fstream fileio;
 
 glm::vec3 ObjectCreator::getMax(std::vector<glm::vec3> vector_lst){
-    // reperes i,j, y ou y = f(i,j)
-    float maxI = 0;
-    float maxJ = 0;
-    float maxY = 0;
+    float maxI = std::numeric_limits<float>::lowest();
+    float maxY = std::numeric_limits<float>::lowest();
+    float maxJ = std::numeric_limits<float>::lowest();
 
     for (glm::vec3 vect : vector_lst){
         if (vect[0] > maxI){
@@ -27,14 +27,16 @@ glm::vec3 ObjectCreator::getMax(std::vector<glm::vec3> vector_lst){
         }
     }
 
+    // Assuming convention: x = i, y = j, z = y
     return glm::vec3(maxI, maxY, maxJ);
-};
+}
+
 
 glm::vec3 ObjectCreator::getMin(std::vector<glm::vec3> vector_lst){
     // reperes i,j, y ou y = f(i,j)
-    float minI = 0;
-    float minJ = 0;
-    float minY = 0;
+    float minI = std::numeric_limits<float>::max();
+    float minJ = std::numeric_limits<float>::max();
+    float minY = std::numeric_limits<float>::max();
 
     for (glm::vec3 vect : vector_lst){
         if (vect[0] < minI){
@@ -49,18 +51,19 @@ glm::vec3 ObjectCreator::getMin(std::vector<glm::vec3> vector_lst){
     }
 
     return glm::vec3(minI, minY, minJ);
-};
+}
 
 void normalize(std::vector<glm::vec3> &vector_lst, float maxY, glm::vec3 min, glm::vec3 max){
-    for (glm::vec3 vect : vector_lst){
-        vect[1] = (vect[1] - min[1]) / (max[1] - min[1]) * maxY;
+    for (glm::vec3& vect : vector_lst){
+        vect[1] = ((vect[1] - min[1]) / (max[1] - min[1]) )* maxY;
     }
 };
 
 void ObjectCreator::centredCoordsSys(std::vector<glm::vec3> &vector_lst, glm::vec3 min, glm::vec3 max){  //pass by ref
+    //and make it only positive
     glm::vec3 center = (max + min) / 2.0f;
 
-    for ( glm::vec3 vector : vector_lst){
+    for (glm::vec3& vector : vector_lst){
         if (vector[0] < 0) {
             vector[0] += abs(center[0]);
         } else {
@@ -83,7 +86,7 @@ void ObjectCreator::centredCoordsSys(std::vector<glm::vec3> &vector_lst, glm::ve
 void createBase(std::vector<float> &VModel, ObjectGeneratorSettings generationSettings){
     // Centred around 0;
     float size = generationSettings.surfaceSize;
-    float height = 1.0f;
+    float height = 5.0f;
     float half = size/2;
     std::vector<float> base = {
 
@@ -144,7 +147,7 @@ void createBase(std::vector<float> &VModel, ObjectGeneratorSettings generationSe
 
 void createCube(glm::vec3 coords, std::vector<float> &VModel, ObjectGeneratorSettings generationSettings){
     //Si on utilise un autre cube size , nous perdons les ecart correctes entre les bloques , nous pouvons alors dire que toutes les auytres mesures sont en mm
-    float size = 1.0f;
+    float size = generationSettings.cubeSize;
     float i = coords[0];
     float h = coords[1];
     float j = coords[2];

@@ -7,6 +7,8 @@ struct ObjectGeneratorSettings
     //all in mm
     float surfaceSize; // sideSize
     float maxHeight; // maximum Height
+    float cubeSize; // side size of the cube
+    float spacing; // spacing between cubes
 };
 
 class ObjectCreator {

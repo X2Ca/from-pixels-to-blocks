@@ -273,7 +273,7 @@ void processInput(GLFWwindow* window, CameraMovement& camera)
 
 std::vector<float> createCube(GeneralSettings settings)
 {
-    float size = settings.cubeSize;
+    float size = settings.cubeSize/2.0f;
 
     return {
         // back face
@@ -635,8 +635,8 @@ int main()
 
     if (MODE == 1) {
         // Pre-evaluate all function values and build instance positions
-        for (float i = -((float)(WIDTH * settings.scaleFactor) / 2); i < ((float)(WIDTH * settings.scaleFactor) / 2); i += settings.scaleFactor) {
-            for (float j = -((float)(HEIGHT * settings.scaleFactor) / 2); j < ((float)(HEIGHT * settings.scaleFactor) / 2); j += settings.scaleFactor) {
+        for (float i = -((float)(WIDTH * settings.scaleFactor) / 4); i < ((float)(WIDTH * settings.scaleFactor) / 4); i += settings.scaleFactor/2) {
+            for (float j = -((float)(HEIGHT * settings.scaleFactor) / 4); j < ((float)(HEIGHT * settings.scaleFactor) / 4); j += settings.scaleFactor/2) {
                 float y = func.RPNCalculator(UserFunction, i, j);
                 instancePositions.push_back(glm::vec3(i, y, j));
 
@@ -653,8 +653,8 @@ int main()
         int gridSize = (int)UserImage.grid.size();
         MinMax = glm::vec4(*std::min_element(UserImage.grid.begin(), UserImage.grid.end()), *std::max_element(UserImage.grid.begin(), UserImage.grid.end()), 0.0f, 0.0f);
         // Build instance data once before the loop
-        for (float i = -((float) (UserImage.rows*settings.scaleFactor)/2); i<((float) (UserImage.rows*settings.scaleFactor)/2); i+=settings.scaleFactor){
-            for (float j = -((float) (UserImage.columns*settings.scaleFactor)/2); j<((float) (UserImage.columns*settings.scaleFactor)/2); j+=settings.scaleFactor){
+        for (float i = -((float) (UserImage.rows*settings.scaleFactor)/4); i<((float) (UserImage.rows*settings.scaleFactor)/4); i+=settings.scaleFactor/2){
+            for (float j = -((float) (UserImage.columns*settings.scaleFactor)/4); j<((float) (UserImage.columns*settings.scaleFactor)/4); j+=settings.scaleFactor/2){
                 if (counter >= gridSize) {
                     std::cerr << "Grid overrun at counter " << counter << "\n";
                     break;
@@ -672,6 +672,8 @@ int main()
 
     ObjSettings.maxHeight = 100.0f;
     ObjSettings.surfaceSize = 100.0f;
+    ObjSettings.cubeSize = settings.cubeSize;
+    ObjSettings.spacing = settings.spacingCube;
 
 
     std::vector<glm::vec3> coords;
